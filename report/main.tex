@@ -1,0 +1,122 @@
+\documentclass[12pt]{article}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{graphicx}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{placeins}
+\usepackage{chngcntr}
+\usepackage{sectsty}
+\usepackage[hidelinks]{hyperref}
+
+\sectionfont{\centering}
+\counterwithin{figure}{section}
+\renewcommand{\abstractname}{\large Abstract}
+\renewcommand{\baselinestretch}{1.5}
+
+\newcommand{\sectionfontstyle}{\fontsize{16pt}{1em}\usefont{T1}{phv}{b}{n}}
+
+\begin{document}
+    \pagenumbering{gobble}
+    \thispagestyle{empty}
+    \begin{center}
+        \textit{Project Report on}\\
+        \vspace{2mm}
+        \Large{\textsc{Sql2Neo: Interconversion of SQL, NoSQL and Neo4j formats}}\\
+        \vspace{3mm}
+        \textit{Submitted by}\\
+        \large{\textbf{
+            Aayush Jain (16IT101)\\
+            Aditi Rao (16IT103)
+        }}\\
+        \vspace{4mm}
+        Under the Guidance of\\
+        \textbf{Shruti J R}\\
+        Department of Information Technology, NITK Surathkal\\
+        \vspace{4mm}
+        \textit{Date of Submission: XX June 2020}\\
+        \vspace{4mm}
+        in partial fulfillment for the award of the degree\\
+        of\\
+        \textbf{Bachelor of Technology}\\
+        In\\
+        \textbf{Information Technology}\\
+        At
+        \vspace{4mm}\\
+        \includegraphics[width=1.2in,height=1.2in]{img/nitk.jpg}\\
+        \textbf{Department of Information Technology}\\
+        \textbf{National Insitute of Technology Karnataka, Surathkal}\\
+        June 2020
+    \end{center}
+
+    \newpage
+
+    \begin{abstract}
+        Insert abstract here.
+    \end{abstract}
+
+    \newpage
+
+    \tableofcontents
+
+    \newpage
+
+    \pagenumbering{arabic}
+
+    \section{\sectionfontstyle Introduction}
+    Intro here
+
+    \newpage
+
+    \section{\sectionfontstyle Literature Survey}
+    \subsection{Related Work}
+    Literature survey
+
+    \subsection{Outcome of Literature Survey}
+    Base paper is ~\cite{base_paper}.
+
+    \subsection{Problem Statement}
+    Problem Statement
+
+    \subsection{Objectives}
+    \begin{itemize}
+        \item O1
+        \item O2
+    \end{itemize}
+
+    \newpage
+
+    \section{\sectionfontstyle Requirement Analysis}
+    Requirements
+
+    \newpage
+
+    \section{\sectionfontstyle System Design/Architecture}
+    Architecture here
+
+    \newpage
+
+    \section{\sectionfontstyle Methodology}
+    Methodology
+
+    \newpage
+
+    \section{\sectionfontstyle Implementation}
+    Implementation details
+
+    \newpage
+
+    \section{\sectionfontstyle Results and Analysis}
+    Results
+
+    \newpage
+
+    \section{\sectionfontstyle Conclusion and Future Works}
+    Conclusion
+
+    \newpage
+
+    \bibliographystyle{ieeetr}
+    \bibliography{references}
+\end{document}

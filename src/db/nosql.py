@@ -1,0 +1,3 @@
+"""
+NoSQL related DB calls
+"""
