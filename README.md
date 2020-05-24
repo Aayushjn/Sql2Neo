@@ -31,6 +31,9 @@ A .env file must exist in the project root with the following keys
 - MYSQL_DB_USER
 - MYSQL_DB_PASS
 - MYSQL_DB_NAME
+- MONGO_HOST
+- MONGO_PORT
+- MONGO_DB_NAME
 
 To be updated
 

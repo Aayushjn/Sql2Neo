@@ -1,1 +1,1 @@
-from .settings import MYSQL_CONFIG
+from .settings import MYSQL_CONFIG, MONGO_HOST, MONGO_PORT, MONGO_DB_NAME
