@@ -27,6 +27,11 @@ Neo4j requires Java 11 to be installed. Instructions on installing both can be f
 [here](https://neo4j.com/docs/operations-manual/current/installation/linux/debian/).
 
 ### Usage
+A .env file must exist in the project root with the following keys
+- MYSQL_DB_USER
+- MYSQL_DB_PASS
+- MYSQL_DB_NAME
+
 To be updated
 
 ### Testing
