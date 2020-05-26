@@ -58,9 +58,7 @@ class MySQL:
             cursor.execute(f'SELECT * FROM {key}')
             records[key] = []
             for record in cursor:
-                insert_record = {}
-                for i, entry in enumerate(record):
-                    insert_record[table_details[key][i]] = entry
+                insert_record = {table_details[key][i]: entry for (i, entry) in enumerate(record)}
                 records[key].append(insert_record)
 
         cursor.close()
