@@ -1,12 +1,12 @@
 """
 SQL related DB calls
 """
-from typing import Dict
+from typing import Dict, List
 
 import mysql.connector
 from mysql.connector import errorcode
 
-from src import MYSQL_CONFIG
+from src.settings import MYSQL_CONFIG
 
 
 class MySQL:
@@ -24,10 +24,10 @@ class MySQL:
             else:
                 print(err)
 
-    def extract_table_details(self) -> Dict[str, Dict[str, str]]:
+    def extract_table_details(self) -> Dict[str, List[str]]:
         """
         Fetches tables in the database and gets the column name and datatype for each table
-        :return: dictionary containing {table_name: {col_name: d_type,...}}
+        :return: dictionary containing {table_name: [col1, col2, ...]}
         """
         table_names_cursor = self.conn.cursor(buffered=True)
         table_details_cursor = self.conn.cursor()
@@ -37,13 +37,34 @@ class MySQL:
         tables = {}
         for table_name in table_names_cursor:
             table_details_cursor.execute(f'DESCRIBE {table_name[0]}')
-            tables[table_name[0]] = {}
+            tables[table_name[0]] = []
             for record in table_details_cursor:
-                tables[table_name[0]][record[0]] = record[1]
+                tables[table_name[0]].append(record[0])
 
         table_details_cursor.close()
         table_names_cursor.close()
         return tables
+
+    def extract_records_by_table(self) -> Dict[str, List[Dict[str, object]]]:
+        """
+        Extracts all the records stored in each table
+        :return: dictionary containing list of records. Each record is a dictionary with {col_name: value}
+        """
+        table_details = self.extract_table_details()
+        cursor = self.conn.cursor()
+
+        records = {}
+        for key in table_details:
+            cursor.execute(f'SELECT * FROM {key}')
+            records[key] = []
+            for record in cursor:
+                insert_record = {}
+                for i, entry in enumerate(record):
+                    insert_record[table_details[key][i]] = entry
+                records[key].append(insert_record)
+
+        cursor.close()
+        return records
 
     def close(self):
         """

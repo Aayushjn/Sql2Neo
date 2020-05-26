@@ -5,7 +5,7 @@ from typing import Dict, List
 
 import pymongo
 
-from src import MONGO_PORT, MONGO_HOST, MONGO_DB_NAME
+from src.settings import MONGO_PORT, MONGO_HOST, MONGO_DB_NAME
 
 
 class Mongo:

@@ -1,7 +1,7 @@
 import argparse
 from pprint import pprint
 
-from src.db import Mongo
+from src.db import MySQL
 
 parser = argparse.ArgumentParser(description='A command-line tool to convert data between SQL, NoSQL and Neo4j '
                                              'databases')
@@ -10,6 +10,6 @@ parser = argparse.ArgumentParser(description='A command-line tool to convert dat
 
 args = parser.parse_args()
 
-mongo = Mongo()
-pprint(mongo.extract_collection_details())
-mongo.close()
+mysql = MySQL()
+pprint(mysql.extract_records_by_table())
+mysql.close()
