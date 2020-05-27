@@ -31,19 +31,28 @@ A .env file must exist in the project root with the following keys
 - MYSQL_DB_USER
 - MYSQL_DB_PASS
 - MYSQL_DB_NAME
-- MONGO_HOST
-- MONGO_PORT
+- MONGO_HOST (default: _localhost_)
+- MONGO_PORT (default: _27017_)
+- MONGO_USER (default: _None_)
+- MONGO_PASS (default: _None_)
 - MONGO_DB_NAME
+- NEO4J_HOST (default: _localhost_)
+- NEO4J_PORT (default: _7474_)
+- NEO4J_USER (default: _neo4j_)
+- NEO4J_PASS (default: _neo4j_)
+- NEO4J_SCHEME (default: _http_)
 
 To be updated
 
 ### Testing
 For testing purposes, the [employees database](https://dev.mysql.com/doc/employee/en/) provided by MySQL is used. It is 
 available under the [Creative Commons license](https://creativecommons.org/licenses/by-sa/3.0/). It has 4 million 
-records across 6 tables (~160MB). 
+records across 6 tables (~160 MB). 
 
 ### Features
 - [ ] SQL to Neo4j conversion
-- [ ] NoSQL to Neo4j conversion 
-- [ ] Neo4j to SQL conversion 
-- [ ] Neo4j to NoSQL conversion 
+    - [x] Node creation
+    - [ ] Relationship creation
+- [ ] NoSQL to Neo4j conversion
+    - [x] Node creation
+    - [ ] Relationship creation
