@@ -1,6 +1,7 @@
 """
 Neo4j related DB calls
 """
+import logging
 import sys
 from typing import List, Dict
 
@@ -24,15 +25,15 @@ class Neo4j:
         try:
             tx = self.graph.begin()
             for table in records:
-                print(f'Creating nodes for {table}')
+                logging.info(f'Creating nodes for {table}')
                 for record in records[table]:
                     node = Node(table, **record)
                     tx.create(node)
-                print(f'{len(records[table])} nodes created')
+                logging.info(f'{len(records[table])} nodes created')
             tx.commit()
         except MaxRetryError:
-            print(f'Check whether Neo4j is running on {NEO4J_SCHEME}://{NEO4J_HOST}:{NEO4J_PORT}/')
+            logging.error(f'Check whether Neo4j is running on {NEO4J_SCHEME}://{NEO4J_HOST}:{NEO4J_PORT}/')
             sys.exit(ERR_DB_CONN)
         except RuntimeError:
-            print('Verify Neo4j credentials')
+            logging.error('Verify Neo4j credentials', exc_info=True)
             sys.exit(1)
