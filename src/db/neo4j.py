@@ -1,6 +1,8 @@
 """
 Neo4j related DB calls
 """
+import calendar
+import datetime
 import logging
 import sys
 from typing import List, Dict
@@ -12,6 +14,37 @@ from urllib3.exceptions import MaxRetryError
 
 from src.config import NEO4J_HOST, NEO4J_PORT, NEO4J_USER, NEO4J_PASS, NEO4J_SCHEME, ERR_DB_CONN
 from src.models import AttributeData
+
+SUPPORTED_TYPES = [int, float, str]
+CONVERTED_TYPES = [datetime.date, datetime.datetime, datetime.time, datetime.timedelta, type(None)]
+
+
+def get_compatible_record(record: Dict[str, object]) -> Dict[str, object]:
+    """
+    Convert existing record to Neo4j compatible data types
+    Neo4j supports only `SUPPORTED_TYPES`
+    All datetime types and NoneType are converted to Neo4j compatible strings
+
+    :param record: single record of the table
+    :return: record with Neo4j compatible data types
+    """
+    modified_record = record
+    for attr in record:
+        t = type(record[attr])
+        if t not in SUPPORTED_TYPES and t not in CONVERTED_TYPES:
+            logging.error(f'{t} is not supported in Neo4j')
+            sys.exit(2)
+        if t in CONVERTED_TYPES:
+            if t == datetime.time or t == datetime.timedelta:
+                modified_record[attr] = str(record[attr])
+            elif t == datetime.datetime or t == datetime.date:
+                # convert to UTC UNIX timestamp
+                modified_record[attr] = calendar.timegm(record[attr].timetuple())
+            else:
+                # NoneType
+                modified_record[attr] = ''
+
+    return modified_record
 
 
 class Neo4j:
@@ -63,7 +96,7 @@ class Neo4j:
         for table in records:
             tx = self.graph.begin()
             for record in records[table]:
-                node = Node(table, **record)
+                node = Node(table, **get_compatible_record(record))
                 tx.create(node)
             tx.commit()
             logging.info(f'{len(records[table])} nodes created')
@@ -83,6 +116,5 @@ class Neo4j:
             for attr in relations[table]:
                 if (rel := relations[table][attr].foreign_key) is not None:
                     fk_table, fk_attr = rel.split('.')
-                    query.format()
                     self.graph.run(query.format(table, fk_table, attr, fk_attr, table, fk_table))
                     logging.info(f'Relationship {table}_FK_{fk_table} created')
