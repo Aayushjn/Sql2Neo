@@ -3,12 +3,13 @@ SQL related DB calls
 """
 import logging
 import sys
-from typing import Dict, List, Union, Iterable
+from typing import Dict, List, Iterable
 
 import mysql.connector
 from mysql.connector import errorcode
 
 from src.config import MYSQL_CONFIG, ERR_DB_CONN
+from src.models import AttributeData
 
 
 class MySQL:
@@ -33,19 +34,14 @@ class MySQL:
         self.conn.close()
         logging.info('MySQL connection closed')
 
-    def get_tables_and_relationships(self) -> Dict[str, Dict[str, List[Union[bool, str, None]]]]:
+    def get_tables_and_relationships(self) -> Dict[str, Dict[str, AttributeData]]:
         """
         Fetches tables in the database and gets the column names for each table
 
         :return: dictionary containing
         {
             table_name: {
-                col_name: [
-                    index_pos,
-                    True/False,
-                    True/False,
-                    None/'<ref_table.ref_col>'
-                ],...
+                col_name: attr_data,...
             },...
         }
         """
@@ -65,12 +61,12 @@ class MySQL:
                 tables[entry[0]] = {}
 
             # rel defines [ordinal_position, is_pk, is_unique, fk_on]
-            rel = [entry[3], False, False, None]
+            data = AttributeData(entry[3])
             if entry[2] == 'PRI':
-                rel[1] = rel[2] = True
+                data.index = data.unique = True
             elif entry[2] == 'UNI':
-                rel[2] = True
-            tables[entry[0]][entry[1]] = rel
+                data.unique = True
+            tables[entry[0]][entry[1]] = data
 
         cursor.close()
 
@@ -84,7 +80,7 @@ class MySQL:
 
         for entry in cursor:
             # FKs are stored as REFERENCED_TABLE_NAME.REFERENCED_COLUMN_NAME
-            tables[entry[0]][entry[1]][3] = f'{entry[2]}.{entry[3]}'
+            tables[entry[0]][entry[1]].foreign_key = f'{entry[2]}.{entry[3]}'
         cursor.close()
 
         return tables

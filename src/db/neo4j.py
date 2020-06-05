@@ -3,7 +3,7 @@ Neo4j related DB calls
 """
 import logging
 import sys
-from typing import List, Dict, Union
+from typing import List, Dict
 
 from neobolt.exceptions import ServiceUnavailable
 from py2neo import Node
@@ -11,6 +11,7 @@ from py2neo.database import Graph
 from urllib3.exceptions import MaxRetryError
 
 from src.config import NEO4J_HOST, NEO4J_PORT, NEO4J_USER, NEO4J_PASS, NEO4J_SCHEME, ERR_DB_CONN
+from src.models import AttributeData
 
 
 class Neo4j:
@@ -35,7 +36,7 @@ class Neo4j:
             logging.error('Verify Neo4j credentials', exc_info=True)
             sys.exit(ERR_DB_CONN)
 
-    def create_indices_and_constraints(self, relations: Dict[str, Dict[str, List[Union[bool, str, None]]]]):
+    def create_indices_and_constraints(self, relations: Dict[str, Dict[str, AttributeData]]):
         """
         Create indices and constraints on all "tables"
         Indices are currently built on PK attributes only
@@ -44,10 +45,10 @@ class Neo4j:
         """
         for table in relations:
             for attr in relations[table]:
-                if relations[table][attr][1]:
+                if relations[table][attr].index:
                     self.graph.run(f'CREATE INDEX ON:{table}({attr})')
                     logging.info(f'Index created on {attr} for {table}')
-                if relations[table][attr][2] and not relations[table][attr][1]:
+                if relations[table][attr].unique and not relations[table][attr].index:
                     self.graph.run(f'CREATE CONSTRAINT constraint_{table}_{attr} ON (a:{table}) ASSERT a.{attr} IS '
                                    f'UNIQUE')
                     logging.info(f'Uniqueness constraint created on {attr} for {table}')
@@ -67,7 +68,7 @@ class Neo4j:
             tx.commit()
             logging.info(f'{len(records[table])} nodes created')
 
-    def create_relationships(self, relations: Dict[str, Dict[str, List[Union[bool, str, None]]]]):
+    def create_relationships(self, relations: Dict[str, Dict[str, AttributeData]]):
         """
         Create relationships between all nodes (performed after `write_records_to_neo`
         Only FK relations are translated to relationships
@@ -80,7 +81,7 @@ class Neo4j:
         query = 'MATCH (a:{}), (b:{}) WHERE a.{} = b.{} CREATE (a) -[r:{}_FK_{}]->(b)'
         for table in relations:
             for attr in relations[table]:
-                if (rel := relations[table][attr][3]) is not None:
+                if (rel := relations[table][attr].foreign_key) is not None:
                     fk_table, fk_attr = rel.split('.')
                     query.format()
                     self.graph.run(query.format(table, fk_table, attr, fk_attr, table, fk_table))
