@@ -18,6 +18,7 @@ class Mongo:
     def __init__(self):
         self.client = pymongo.MongoClient(MONGO_HOST, int(MONGO_PORT), username=MONGO_USER, password=MONGO_PASS)
         try:
+            # 'ismaster' admin command is an inexpensive command to verify if connection to MongoDB is established
             self.client.admin.command('ismaster')
         except ConnectionFailure:
             logging.error(f'Check whether MongoDB is running on {MONGO_HOST}:{MONGO_PORT}')
@@ -25,9 +26,14 @@ class Mongo:
         logging.info('Connection established to Mongo DB')
         self.db = self.client[MONGO_DB_NAME]
 
+    def __del__(self):
+        self.client.close()
+        logging.info('MongoDB connection closed')
+
     def extract_collection_details(self) -> Dict[str, List[str]]:
         """
         Fetches collections in the database and gets the keys of the collection
+
         :return: dictionary containing {collection_name: [key1, key2, ...]}
         """
         collection_names = self.db.list_collection_names()
@@ -46,6 +52,7 @@ class Mongo:
     def extract_records(self) -> Dict[str, List[Dict[str, object]]]:
         """
         Extracts all records stored in each collection
+
         :return: dictionary containing list of records. Each record is a dictionary with {key: value}
         """
         details = self.extract_collection_details()
@@ -59,10 +66,3 @@ class Mongo:
                 records[key].append(record)
 
         return records
-
-    def close(self):
-        """
-        Close connection to database
-        """
-        self.client.close()
-        logging.info('MongoDB connection closed')

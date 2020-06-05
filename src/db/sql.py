@@ -36,6 +36,7 @@ class MySQL:
     def get_tables_and_relationships(self) -> Dict[str, Dict[str, List[Union[bool, str, None]]]]:
         """
         Fetches tables in the database and gets the column names for each table
+
         :return: dictionary containing
         {
             table_name: {
@@ -91,6 +92,7 @@ class MySQL:
     def extract_records(self, table_details: Dict[str, Iterable]) -> Dict[str, List[Dict[str, object]]]:
         """
         Extracts all the records stored in each table
+
         :return: dictionary containing list of records. Each record is a dictionary with {col_name: value}
         """
         cursor = self.conn.cursor()
