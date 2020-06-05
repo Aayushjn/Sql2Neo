@@ -50,4 +50,5 @@ NEO4J_USER = os.getenv('NEO4J_USER', 'neo4j')
 NEO4J_PASS = os.getenv('NEO4J_PASS', 'neo4j')
 NEO4J_SCHEME = os.getenv('NEO4J_SCHEME', 'http')
 
+# Constant definitions
 ERR_DB_CONN = 100

@@ -3,12 +3,12 @@ SQL related DB calls
 """
 import logging
 import sys
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import mysql.connector
 from mysql.connector import errorcode
 
-from src.settings import MYSQL_CONFIG, ERR_DB_CONN
+from src.config import MYSQL_CONFIG, ERR_DB_CONN
 
 
 class MySQL:
@@ -29,27 +29,49 @@ class MySQL:
             sys.exit(ERR_DB_CONN)
         logging.info('Connection established to MySQL database')
 
-    def extract_table_details(self) -> Dict[str, List[str]]:
+    def get_tables_and_relationships(self) -> Dict[str, Dict[str, List[Union[bool, str, None]]]]:
         """
-        Fetches tables in the database and gets the column name and datatype for each table
-        :return: dictionary containing {table_name: [col1, col2, ...]}
+        Fetches tables in the database and gets the column names for each table
+        :return: dictionary containing
+        {
+            table_name: {
+                col_name: {
+                    'PK': True/False,
+                    'UNI': True/False,
+                    'FK': None/'<ref_table.ref_col>'
+                },...
+            },...
+        }
         """
-        table_names_cursor = self.conn.cursor(buffered=True)
-        table_details_cursor = self.conn.cursor()
-
-        table_names_cursor.execute('SHOW TABLES')
+        cursor = self.conn.cursor()
+        query = 'SELECT TABLE_NAME, COLUMN_NAME, COLUMN_KEY, ORDINAL_POSITION FROM information_schema.COLUMNS WHERE ' \
+                'TABLE_SCHEMA = %s ORDER BY TABLE_NAME, ORDINAL_POSITION'
+        cursor.execute(query, (MYSQL_CONFIG['database'],))
 
         tables = {}
-        logging.info(f'{table_names_cursor.rowcount} tables discovered')
-        for table_name in table_names_cursor:
-            table_details_cursor.execute(f'DESCRIBE {table_name[0]}')
-            tables[table_name[0]] = []
-            logging.info(f'Extracting {table_name[0]}\'s attributes and relationships')
-            for record in table_details_cursor:
-                tables[table_name[0]].append(record[0])
+        logging.info(f'{cursor.rowcount} tables discovered')
+        for entry in cursor:
+            logging.info(f'Fetching column names of {entry[0]}')
+            if tables.get(entry[0]) is None:
+                tables[entry[0]] = {}
 
-        table_details_cursor.close()
-        table_names_cursor.close()
+            rel = [entry[3], False, False, None]
+            if entry[2] == 'PRI':
+                rel[1] = rel[2] = True
+            elif entry[2] == 'UNI':
+                rel[2] = True
+            tables[entry[0]][entry[1]] = rel
+
+        cursor.close()
+
+        cursor = self.conn.cursor()
+        query = 'SELECT TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME FROM ' \
+                'information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = %s AND REFERENCED_COLUMN_NAME IS NOT NULL;'
+        cursor.execute(query, (MYSQL_CONFIG['database'],))
+
+        for entry in cursor:
+            tables[entry[0]][entry[1]][3] = f'{entry[2]}.{entry[3]}'
+        cursor.close()
 
         return tables
 
@@ -58,7 +80,7 @@ class MySQL:
         Extracts all the records stored in each table
         :return: dictionary containing list of records. Each record is a dictionary with {col_name: value}
         """
-        table_details = self.extract_table_details()
+        table_details = self.get_tables_and_relationships()
         cursor = self.conn.cursor()
 
         records = {}
@@ -67,7 +89,7 @@ class MySQL:
             cursor.execute(f'SELECT * FROM {table}')
             records[table] = []
             for record in cursor:
-                insert_record = {table_details[table][i]: entry for (i, entry) in enumerate(record)}
+                insert_record = {key: value for (key, value) in zip(table_details[table], record)}
                 records[table].append(insert_record)
 
         cursor.close()

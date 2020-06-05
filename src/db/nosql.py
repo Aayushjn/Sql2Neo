@@ -8,7 +8,7 @@ from typing import Dict, List
 import pymongo
 from pymongo.errors import ConnectionFailure
 
-from src.settings import MONGO_PORT, MONGO_HOST, MONGO_DB_NAME, MONGO_USER, MONGO_PASS, ERR_DB_CONN
+from src.config import MONGO_PORT, MONGO_HOST, MONGO_DB_NAME, MONGO_USER, MONGO_PASS, ERR_DB_CONN
 
 
 class Mongo:
@@ -65,3 +65,4 @@ class Mongo:
         Close connection to database
         """
         self.client.close()
+        logging.info('MongoDB connection closed')

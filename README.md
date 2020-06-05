@@ -2,6 +2,8 @@
 
 A command-line tool to convert data between SQL, NoSQL and Neo4j databases
 
+_Due to lack of semantics, SQL records converted to Neo4j use FK (Foreign Key) as a general relationship._
+
 ### Installation
 - Python 3.8
 ```shell script
