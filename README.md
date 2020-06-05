@@ -41,7 +41,7 @@ A .env file must exist in the project root with the following keys
 - NEO4J_PASS (default: _neo4j_)
 - NEO4J_SCHEME (default: _http_)
 
-To be updated
+Run `python sql2neo.py convert --src <src_db> --dest <dest_db>`.
 
 ### Testing
 For testing purposes, the [employees database](https://dev.mysql.com/doc/employee/en/) provided by MySQL is used. It is 
@@ -49,9 +49,14 @@ available under the [Creative Commons license](https://creativecommons.org/licen
 records across 6 tables (~160 MB). 
 
 ### Features
-- [ ] SQL to Neo4j conversion
+- [x] SQL to Neo4j conversion
+    - [x] Index creation
     - [x] Node creation
-    - [ ] Relationship creation
+    - [x] Relationship creation
+    - [ ] Indexing on non-primary attribute
 - [ ] NoSQL to Neo4j conversion
     - [x] Node creation
     - [ ] Relationship creation
+    
+Sql2Neo creates indices for all SQL tables on its primary key. Further, it creates a uniqueness constraint on all non-PK
+attributes that are unique. Finally, it creates FK relations from referencing table to the referenced table. 
