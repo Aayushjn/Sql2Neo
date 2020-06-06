@@ -32,8 +32,8 @@ def get_compatible_record(record: Dict[str, object]) -> Dict[str, object]:
     for attr in record:
         t = type(record[attr])
         if t not in SUPPORTED_TYPES and t not in CONVERTED_TYPES:
-            logging.error(f'{t} is not supported in Neo4j')
-            sys.exit(2)
+            logging.warning(f'{t} is not supported in Neo4j. Converting to string')
+            modified_record[attr] = str(modified_record[attr])
         if t in CONVERTED_TYPES:
             if t == datetime.time or t == datetime.timedelta:
                 modified_record[attr] = str(record[attr])

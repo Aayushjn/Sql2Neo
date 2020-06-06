@@ -16,8 +16,10 @@ class MySQL:
     """
     A wrapper class around the MySQL connection
     """
-    def __init__(self):
+    def __init__(self, db_name: str = None):
         try:
+            if db_name is not None:
+                MYSQL_CONFIG['database'] = db_name
             self.conn = mysql.connector.connect(**MYSQL_CONFIG)
         except mysql.connector.Error as err:
             if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
