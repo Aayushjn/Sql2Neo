@@ -5,15 +5,27 @@
 \usepackage{titlesec}
 \usepackage{caption}
 \usepackage{subcaption}
-\usepackage{placeins}
+\usepackage[section]{placeins}
 \usepackage{chngcntr}
 \usepackage{sectsty}
+\usepackage{algorithmicx}
+\usepackage[ruled,vlined]{algorithm2e}
 \usepackage[hidelinks]{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
 
 \sectionfont{\centering}
 \counterwithin{figure}{section}
 \renewcommand{\abstractname}{\large Abstract}
 \renewcommand{\baselinestretch}{1.5}
+
+\lstset{
+    basicstyle=\ttfamily,
+    columns=fullflexible,
+    breaklines=true,
+    postbreak=\mbox{\textcolor{red}{$\hookrightarrow$}\space}
+}
 
 \newcommand{\sectionfontstyle}{\fontsize{16pt}{1em}\usefont{T1}{phv}{b}{n}}
 
@@ -88,22 +100,152 @@
     \newpage
 
     \section{\sectionfontstyle Requirement Analysis}
-    Requirements
+    Sql2Neo is intended to be a command line tool that enables interconversion between SQL, NoSQL and Neo4j formats.
+
+    \subsection{Functional Requirements}
+    \begin{enumerate}
+        \item [F1.] SQL databases must be fully converted to a Neo4j database. This includes indexes, constraints, records and relationships.
+        \item [F2.] NoSQL databases must be fully converted to a Neo4j database. This includes constraints (inferred) and records.
+        \item [F3.] SQL queries must be translated to a Neo4j query to provide interoperability between databases.
+    \end{enumerate}
+
+    \subsection{Non-Functional Requirements}
+    \begin{enumerate}
+        \item [NF1.] Convert NoSQL database to intermediate SQL format to provide compatibility.
+        \item [NF2.] Manage data loading from databases in order to prevent memory overuse and overflow errors.
+        \item [NF3.] Provide Sql2Neo as an isolated tool (with packaged dependencies) to improve usability.
+    \end{enumerate}
+
+    Most software and hardware requirements intersect with the implementation tools, as discussed in section \ref{sec:impl}.
 
     \newpage
 
     \section{\sectionfontstyle System Design/Architecture}
+    \label{sec:sys_arch}
     Architecture here
 
     \newpage
 
     \section{\sectionfontstyle Methodology}
-    Methodology
+    \subsection{Converting SQL-databases to Neo4j format}
+    The first step to convert an SQL database is to extract attribute details of each table. This data is available in the \verb|information_schema| of the database. The data for each attribute answers the following questions:
+    \begin{itemize}
+        \item should this attribute be \textit{indexed}?
+        \item does this attribute have a \textit{uniqueness constraint}?
+        \item is this attribute a \textit{foreign key reference} to another table's attribute?
+    \end{itemize}
 
-    \newpage
+    \begin{algorithm}[htb!]
+        \SetAlgoLined
+        \label{algo:sql_attr_extract}
+        \caption{Extract attribute details of SQL database}
+        \KwIn{\textbf{R}, a relational database}
+        \KwOut{\textbf{AS}, an attribute set containing details of each attribute}
+        AS \gets\ \phi\tcc*{empty map}
+        \ForEach{table in \textbf{information\_schema(R)}}{
+            AS[table] \gets\ \phi\tcc*{empty map}
+            \ForEach{attr in \textbf{table}}{
+                AS[table][attr] \gets\ \{index, unique, fk\}\;
+            }
+        }
+        return AS\;
+    \end{algorithm}
+
+    The index and uniqueness constraint data enable the Neo4j setup to be as closely modelled to the relational one. Furthermore, indexing on attributes is maintained across systems and rigid constraints are also satisfied while inserting in the Neo4j database.
+
+    Since Neo4j stores data as JSON documents, it does not define a rigid and formal schema. Owing to this property, indices and constraints can be created before the data is actually inserted. In Neo4j, index creation is not idempotent, meaning that creating the index twice reults in an error. Additionally, constraints implicitly create an index on the specified attribute (much like relational databases), thus constraints are applied only on those attributes that are not indexed.
+
+    \begin{algorithm}[htb!]
+        \SetAlgoLined
+        \label{algo:sql_create_index}
+        \caption{Create indices and constraints in Neo4j}
+        \KwIn{\textbf{AS}, an attribute set containing details of each attribute}
+        \KwResult{\textbf{G}, a graph database with applied indices and constraints}
+        \ForEach{table in \textbf{AS}}{
+            \ForEach{attr in \textbf{table}}{
+                \uIf{attr must be indexed}{
+                    CreateIndex(G, table, attr)\;
+                }
+                \uElseIf{attr has constraint but not indexed}{
+                    \tcc*[h]{if attr is indexed, then it meets uniqueness constraint}
+
+                    CreateUniquenessConstraint(G, table, attr)\;
+                }
+            }
+        }
+    \end{algorithm}
+
+    In terms of Cypher Query Language (CQL), \verb|CreateIndex(G, table, attr)| is equivalent to 
+    \begin{lstlisting}
+        CREATE INDEX index_name ON:table(attr);
+    \end{lstlisting}
+    \verb|CreateUniquenessConstraint(G, table, attr)| is equivalent to 
+    \begin{lstlisting}
+        CREATE CONSTRAINT constraint_name ON (t:table) ASSERT t.attr IS UNIQUE;
+    \end{lstlisting}
+
+    Conversion of a table's records to Neo4j nodes is a fairly straightforward task. A naive approach is followed where each tables records are converted to a node. This implies that certain tables that behave purely as relationships are also converted to nodes instead of being retained into Neo4j.
+
+    \begin{algorithm}[htb!]
+        \SetAlgoLined
+        \label{algo:sql2graph}
+        \caption{Populate the graph database with records}
+        \KwIn{\textbf{R}, a relational database}
+        \KwResult{\textbf{G}, a populated graph database}
+        \ForEach{table in \textbf{R}}{
+            \ForEach{record in \textbf{table}}{
+                CreateNewNode(G, table, record)\;
+            }
+        }
+    \end{algorithm}
+
+    \verb|CreateNewNode(G, table, record)| is equivalent to 
+    \begin{lstlisting}
+        CREATE (t:table $record);
+    \end{lstlisting}
+    provided that \verb|record| is a map of key-value pairs (assumed as parameter).
+
+    Finally, relationship conversion is performed. This step takes the foreign key relations from each table and maps them to a relation in Neo4j. This also means that the semantics of the relation are lost since the edge (in Neo4j) does not provide actual data. Rather it must be inferred from the database.
+
+    \begin{algorithm}[htb!]
+        \SetAlgoLined
+        \label{algo:sql2graph}
+        \caption{Create relationships between nodes in the graph data}
+        \KwIn{\textbf{AS}, an attribute set containing details of each attribute}
+        \KwResult{\textbf{G}, a graph database with relationships}
+        \ForEach{table in \textbf{AS}}{
+            \ForEach{attr in \textbf{table}}{
+                \If{attr is foreign key}{
+                    fk\_table, fk\_attr \gets\ GetFKReference(attr)\;
+                    CreateRelationship(G, table, attr, fk\_table, fk\_attr)\;
+                }
+            }
+        }
+    \end{algorithm}
+
+    \verb|CreateRelationship(G, table, attr, fk_table, fk_attr)| is equivalent to 
+    \begin{lstlisting}
+        MATCH (a:table), (b:fk_table) WHERE a.attr = b.fk_attr CREATE (a) -[r:relationship_name]-> (b);
+    \end{lstlisting}
+
+    \clearpage
 
     \section{\sectionfontstyle Implementation}
-    Implementation details
+    \label{sec:impl}
+    The proposed approah was implemented on a system running Ubuntu 20.04 LTS. The following additional software is used:
+    \begin{itemize}
+        \item Python 3.8.2
+        \begin{itemize}
+            \item mysql-connector-python 8.0.20
+            \item py2neo 4.3.0
+            \item pymongo 3.10.1
+            \item python-dotenv 0.13.0
+            \item pandas 1.0.4
+        \end{itemize}
+        \item MySQL v8.0.20 for testing SQL databases
+        \item MongoDB v3.6.8 for testing NoSQL databases
+        \item Neo4j 4.0.5
+    \end{itemize}
 
     \newpage
 
