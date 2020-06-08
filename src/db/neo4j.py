@@ -9,7 +9,7 @@ from typing import List, Dict
 
 from neobolt.exceptions import ServiceUnavailable
 from py2neo import Node
-from py2neo.database import Graph
+from py2neo.database import Graph, DatabaseError, ClientError
 from urllib3.exceptions import MaxRetryError
 
 from src.config import NEO4J_HOST, NEO4J_PORT, NEO4J_USER, NEO4J_PASS, NEO4J_SCHEME, ERR_DB_CONN
@@ -79,12 +79,20 @@ class Neo4j:
         for table in relations:
             for attr in relations[table]:
                 if relations[table][attr].index:
-                    self.graph.run(f'CREATE INDEX ON:{table}({attr})')
-                    logging.info(f'Index created on {attr} for {table}')
+                    try:
+                        self.graph.run(f'CREATE INDEX ON:{table}({attr})')
+                        logging.info(f'Index created on {attr} for {table}')
+                    except ClientError as err:
+                        # if index on `attr` already exists, `ClientError` is raised
+                        logging.warning(err.message)
                 if relations[table][attr].unique and not relations[table][attr].index:
-                    self.graph.run(f'CREATE CONSTRAINT constraint_{table}_{attr} ON (a:{table}) ASSERT a.{attr} IS '
-                                   f'UNIQUE')
-                    logging.info(f'Uniqueness constraint created on {attr} for {table}')
+                    try:
+                        self.graph.run(f'CREATE CONSTRAINT constraint_{table}_{attr} ON (a:{table}) ASSERT a.{attr} IS '
+                                       f'UNIQUE')
+                        logging.info(f'Uniqueness constraint created on {attr} for {table}')
+                    except ClientError as err:
+                        # if constraint on `attr` already exists, `ClientError` is raised
+                        logging.warning(err.message)
 
     def write_records_to_neo(self, records: Dict[str, List[Dict[str, object]]]):
         """
@@ -94,12 +102,19 @@ class Neo4j:
         :py:meth:`src.db.Mongo.extract_records`
         """
         for table in records:
-            tx = self.graph.begin()
-            for record in records[table]:
-                node = Node(table, **get_compatible_record(record))
-                tx.create(node)
-            tx.commit()
-            logging.info(f'{len(records[table])} nodes created')
+            try:
+                for record in records[table]:
+                    tx = self.graph.begin()
+                    # if record does not have name attribute, set it with table name
+                    # this is useful during visualization, since the node has a name label
+                    record['name'] = record.get('name', table)
+                    node = Node(table, **get_compatible_record(record))
+                    tx.create(node)
+                    tx.commit()
+                logging.info(f'{len(records[table])} nodes created for {table}')
+            except ClientError as err:
+                # if node already exists (and the node has constraint on a property), `ClientError` is raised
+                logging.warning(err.message)
 
     def create_relationships(self, relations: Dict[str, Dict[str, AttributeData]]):
         """
@@ -118,3 +133,28 @@ class Neo4j:
                     fk_table, fk_attr = rel.split('.')
                     self.graph.run(query.format(table, fk_table, attr, fk_attr, table, fk_table))
                     logging.info(f'Relationship {table}_FK_{fk_table} created')
+
+    def destroy_all(self, relations: Dict[str, Dict[str, AttributeData]]):
+        """
+        Destroy all indices, constraints, nodes and relationships from the source database
+
+        :param relations: dictionary of relations as provided by `MySQL.get_tables_and_relationships()`
+        """
+        for table in relations:
+            self.graph.run(f'MATCH (n:{table}) DETACH DELETE n')
+            logging.info(f'All nodes and relationships of {table} deleted')
+            for attr in relations[table]:
+                if relations[table][attr].index:
+                    try:
+                        self.graph.run(f'DROP INDEX ON:{table}({attr})')
+                        logging.info(f'Index on {table}.{attr} dropped')
+                    except DatabaseError as err:
+                        # may occur if the index doesn't exist
+                        logging.warning(err.message)
+                if relations[table][attr].unique and not relations[table][attr].index:
+                    try:
+                        self.graph.run(f'DROP CONSTRAINT ON (n:{table}) ASSERT n.{attr} IS UNIQUE')
+                        logging.info(f'Uniqueness constraint on {table}.{attr} dropped')
+                    except DatabaseError as err:
+                        # may occur if the constraint doesn't exist
+                        logging.warning(err.message)

@@ -16,6 +16,7 @@ class MySQL:
     """
     A wrapper class around the MySQL connection
     """
+
     def __init__(self, db_name: str = None):
         try:
             if db_name is not None:
@@ -33,8 +34,13 @@ class MySQL:
         logging.info('Connection established to MySQL database')
 
     def __del__(self):
-        self.conn.close()
-        logging.info('MySQL connection closed')
+        try:
+            self.conn.close()
+            logging.info('MySQL connection closed')
+        except:
+            # exception may occur if there was an error in establishing connection
+            # quietly suppress exception
+            pass
 
     def get_tables_and_relationships(self) -> Dict[str, Dict[str, AttributeData]]:
         """

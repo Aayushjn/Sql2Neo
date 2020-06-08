@@ -28,8 +28,13 @@ class Mongo:
         self.db = self.client[db_name or MONGO_DB_NAME]
 
     def __del__(self):
-        self.client.close()
-        logging.info('MongoDB connection closed')
+        try:
+            self.client.close()
+            logging.info('MongoDB connection closed')
+        except:
+            # exception may occur if there was an error in establishing connection
+            # quietly suppress exception
+            pass
 
     def extract_collection_details(self) -> Dict[str, List[str]]:
         """
