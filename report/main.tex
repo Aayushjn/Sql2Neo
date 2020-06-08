@@ -65,7 +65,7 @@
     \newpage
 
     \begin{abstract}
-        Insert abstract here.
+        In order to leverage data relationships and gain insights into the ``big picture'' presented by the data, organizations need a database technology that stores relationship information as a first-class entity. This can be done through the use of Graph Databases such as Neo4j. However, many legacy databases are currently stored in SQL or (more recently) non-graphical NoSQL based systems which thus removes the possibility of enhanced insights brought about through the use of a graph. Thus, this work details the methodology and implementation of Sql2Neo, a command line tool to convert data between SQL/NoSQL systems to Neo4j. The resulting database does not only effectively store data relationships; but is also flexible when expanding a data model or conforming to changing business needs, and is uniquely suited to visualization for higher level decision making and inference mining. In addition, Sql2Neo also supports query translation to Neo4j’s Cypher Query Language (CQL) from standard formats such as SQL, increasing the ease of mobility from SQL/NoSQL systems to Neo4j without the rewriting of existing queries. 
     \end{abstract}
 
     \newpage
@@ -77,25 +77,37 @@
     \pagenumbering{arabic}
 
     \section{\sectionfontstyle Introduction}
-    Intro here
+    A graph database is an online database management system with Create, Read, Update and Delete (CRUD) operations working on a graph data model. A graph data model is defined by a collection of nodes which represent entities and  relationships that connect the nodes. Graph databases are preferred when we want to focus exclusively on understanding the relationship between entities in our database, and want to be able to infer data connections without using things like foreign keys or out-of-band processing, such as MapReduce. 
+
+    In order to leverage data relationships and gain insights into the ``big picture'' presented by the data, organizations need a database technology that stores relationship information as a first-class entity. The rigid schemas of legacy relational database management systems (RDBMS) make it difficult to add different connections or adapt to new business requirements. Not only do graph databases effectively store data relationships; they’re also flexible when expanding a data model or conforming to changing business needs, and are uniquely suited to visualization for higher level decision making and inference mining.
+
+    Relational Databases or SQL databases are a  type of DBMS that defines database relationships in the form of tables, also known as relations and are the most popular DBMS type in the market. Unlike network DBMS, RDBMS does not support many to many relationships.Relational DBMS usually have pre-defined data types that they can support. SQL stands for Structured Query language, and is the standard language for dealing with Relational Databases.It can be used to insert, search, update and delete database records as well as lots of other operations including optimizing and maintenance of databases. Databases like MySQL Database, Oracle, Ms SQL server, Sybase, etc use SQL.
+
+    NoSQL is an upcoming category of Database Management Systems. It’s main characteristic is it’s non-adherence to Relational Database Concepts. The popularity of NoSQL databases grew with internet giants such as Google, Facebook, Amazon etc who use them to deal with gigantic volumes of data. NoSQL systems are preferred in these cases as when you use a relational database for massive volumes of data , the system starts getting slow in terms of response time. The alternative to upgrading hardware to fix the problem would be to distribute our database load on multiple hosts as the load increases. This is known as "scaling out". NOSQL databases are non-relational databases that scale out better than relational databases and are designed with web applications in mind. They do not use SQL to query the data and do not follow strict schemas like relational models. Some examples of NoSQL databases include MongoDB, CouchDB and HBase.
+    Neo4j is a graph database management system described as an ACID-compliant transactional database with native graph storage and processing. Neo4j is the most popular graph database used today. Neo4j is implemented in Java and accessible from software written in other languages using CQL through a transactional HTTP endpoint, or through the binary ``bolt'' protocol.
 
     \newpage
 
     \section{\sectionfontstyle Literature Survey}
     \subsection{Related Work}
-    Literature survey
+    Singh et al.~\cite{base_paper} propose a methodology to convert a relational to a graph database by exploiting the schema and the constraints of the source, applied in this case to healthcare data. In this work MySQL as a relational database and Neo4j as a graph database was used for the implementation of the proposed system. They reported the notable efficiency of the system designed for querying. They also note that visualization has also significantly improved with the usage of graph databases.
+
+    De Virgilio et al.~\cite{rdbms2graph} also propose a methodology to convert a relational database to a graph database by exploiting the schema and the constraints of the source. The approach also supports the translation of conjunctive SQL queries over the source into graph traversal operations over the target. The methodology describes an automatic conversion system from SQL databases to a graph database which allows the created database to perform better than RDB in certain instances of highly complicated schemas.
+
+    Maity et al.~\cite{nosql2rdbms} view the standard problem of converting the RDBMS to NoSQL in reverse approach and conceptualize a problem where NoSQL is converted back to a RDBMS based system.  The approach is illustrated using a case study on MongoDB and Neo4j. They note significant successes in conversion using their algorithm and note the potential for its use in not only  NoSQL systems to RDBMS, but also for interconversion between two NoSQL systems.
+
+    Vicknair et al.~\cite{db_comparison} report on a comparison of Neo4j with MySQL, for use as the underlying technology in the development of a software system to record and query data provenance information. They noted an almost tenfold increase in speed while using Neo4j for traversal based queries. They conclude that in general, the graph database did better at the structural type queries and full-text character searches than the relational database, and that with more development of Neo4j to include integer based indexing measures as well, it could outperform RDBMS systems in a query on numeric data.
+
+    Batra and Tyagi~\cite{rgdb_compare} also report on the comparative performance of Neo4j and MySQL, noting that the retrieval times of graph databases is less than relational databases as  graph databases look only at records that are directly connected to other records. They conclude noting the flexibility of graph databases when new relationships are added as schema restructuring is not required.
 
     \subsection{Outcome of Literature Survey}
-    Base paper is ~\cite{base_paper}.
+    From the survey, it is clear that the use of graph dbs for applications involving great focus on entity relationships or visualization would be highly beneficial. It is also evident that it may be useful to transform data from traditional RDBMS to NoSQL systems such as graph databases simply for the flexibility it offers in terms of addition of relationships/query speeds for traversal queries. Our proposed methodology aims to allow for quick and easy transformation of existing databases to graph format to take advantage of these benefits. 
 
     \subsection{Problem Statement}
-    Problem Statement
+    Graph databases systems such as Neo4j offer various advantages over traditional RDBMS in terms of traversal queries, visualization as well as flexibility in defining new relations without schema restructuring. However, a vast majority of applications that could benefit from this store data in traditional SQL setups (while some do in newer, NoSQL systems). Thus, there is a need to develop a tool to allow for efficient transformation between these systems to graph databases to enhance decision making and insights into the data.
 
     \subsection{Objectives}
-    \begin{itemize}
-        \item O1
-        \item O2
-    \end{itemize}
+    In order to meet the demands of this problem, our proposed system must meet the following objectives. The system architecture must be designed to allow for \textit{extensibility}, in terms of addition of new SQL/NoSQL systems to convert from. To allow for this it is necessary to develop a \textit{standard intermediate format} from which conversion to Neo4j can take place. The system must be able to accurately and appropriately \textit{represent relationships} expressed by the use of concepts such as foreign keys in RDBMS, as well as the many to many relationships described in NoSQL systems. The transformation must be done quickly, \textit{without loss of information} and into a form suitable for direct visualization. There must also be an efficient method for \textit{query translation from SQL/NoSQL based query languages to CQL}, as well as creation of required indices on identified fields to allow for faster query processing and result retrieval.
 
     \newpage
 
@@ -116,13 +128,35 @@
         \item [NF3.] Provide Sql2Neo as an isolated tool (with packaged dependencies) to improve usability.
     \end{enumerate}
 
-    Most software and hardware requirements intersect with the implementation tools, as discussed in section \ref{sec:impl}.
+    Most software and hardware requirements intersect with the implementation tools, as discussed in section~\ref{sec:impl}.
 
     \newpage
 
     \section{\sectionfontstyle System Design/Architecture}
     \label{sec:sys_arch}
-    Architecture here
+    \begin{figure}[htb!]
+        \centering
+        \includegraphics[width=155mm]{img/sql2neo_converter.png}
+        \caption{SQL2Neo Data Converter}
+        \label{fig:sql2neo_converter}
+    \end{figure}
+
+    Figure~\ref{fig:sql2neo_converter} presents an overview of the proposed system architecture. The aim is to take our source database and start by extracting attribute details. This includes information on attribute name, datatype (in case conversion is required as Neo4j does not support some data types), uniqueness, if it is a primary/foreign key or if an index needs to be built on it. Through this we can then further identify indices and constraints in the data, and subsequently define them as required. At the end of this step, all data description  information has been translated to a format which can be further used while translating records into Neo4j.
+
+    Then we begin the population of the Neo4j database. We fetch the records from the source database and, using the data descriptions we have extracted in the previous steps, store it in an intermediate, universal format. This is the last step before node and relationship creation in Neo4j begins.
+    
+    As Neo4j creates relationships between existing nodes, the nodes are defined first from the identified entities in the data description. Then, relationships or links between the nodes are created and committed to the database.
+    
+    The system architecture has been designed to encourage extensibility to include compatibility with multiple SQL and NoSQL implementations. All the primary steps before node creation begins deal with bringing the data to an established universal format after which conversion to Neo4j entities and relationships is a single pipeline process for all. Thus, it requires that only translation steps to this intermediate format must be determined to include another implementation in the converter.
+    
+    \begin{figure}[htb!]
+        \centering
+        \includegraphics[width=155mm]{img/sql2neo_query.png}
+        \caption{SQL2Neo Query Translator}
+        \label{fig:sql2neo_query}
+    \end{figure}
+
+    In addition, we also undertake query translation from source (SQL/NoSQL) to CQL or Cypher Query Language. The steps begin with parsing the query to isolate terms of interest (figure~\ref{fig:sql2neo_query}). This is followed by identifying components (such as entities and attributes) from the parsed data. We then identify any conditional clauses to be placed (such as found in an SQL “WHERE” query phrase) and represent them appropriately. Finally, the Query is reassembled from its components and placed into a template structure for an equivalent CQL query.
 
     \newpage
 
@@ -203,13 +237,13 @@
     \begin{lstlisting}
         CREATE (t:table $record);
     \end{lstlisting}
-    provided that \verb|record| is a map of key-value pairs (assumed as parameter).
+    provided that \verb|record| is a map of key-value pairs (record assumed as a parameter).
 
     Finally, relationship conversion is performed. This step takes the foreign key relations from each table and maps them to a relation in Neo4j. This also means that the semantics of the relation are lost since the edge (in Neo4j) does not provide actual data. Rather it must be inferred from the database.
 
     \begin{algorithm}[htb!]
         \SetAlgoLined
-        \label{algo:sql2graph}
+        \label{algo:sql2rel}
         \caption{Create relationships between nodes in the graph data}
         \KwIn{\textbf{AS}, an attribute set containing details of each attribute}
         \KwResult{\textbf{G}, a graph database with relationships}
@@ -232,7 +266,7 @@
 
     \section{\sectionfontstyle Implementation}
     \label{sec:impl}
-    The proposed approah was implemented on a system running Ubuntu 20.04 LTS. The following additional software is used:
+    The proposed approach was implemented on a system running Ubuntu 20.04 LTS. The following additional software is used:
     \begin{itemize}
         \item Python 3.8.2
         \begin{itemize}
@@ -255,7 +289,9 @@
     \newpage
 
     \section{\sectionfontstyle Conclusion and Future Works}
-    Conclusion
+    In conclusion, it is found that it is not only feasible to undertake such transformation tasks between SQL/NoSQL databases, but that it is also quite beneficial when considering improved data visualization and presentation. The implementation of Sql2Neo discussed is additionally easily extensible to include various other source databases as a result of its system architecture and the use of an intermediate SQL -like data storage strategy. 
+
+    Future works include, as mentioned, the extension of this project to bring more source databases within the transformation fold, as well as to improve the quality of relationships derived from the data through more inference driven approaches (rather than the naive approach undertaken here). 
 
     \newpage
 
