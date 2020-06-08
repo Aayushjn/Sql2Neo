@@ -83,7 +83,7 @@
 
     Relational Databases or SQL databases are a  type of DBMS that defines database relationships in the form of tables, also known as relations and are the most popular DBMS type in the market. Unlike network DBMS, RDBMS does not support many to many relationships.Relational DBMS usually have pre-defined data types that they can support. SQL stands for Structured Query language, and is the standard language for dealing with Relational Databases.It can be used to insert, search, update and delete database records as well as lots of other operations including optimizing and maintenance of databases. Databases like MySQL Database, Oracle, Ms SQL server, Sybase, etc use SQL.
 
-    NoSQL is an upcoming category of Database Management Systems. It’s main characteristic is it’s non-adherence to Relational Database Concepts. The popularity of NoSQL databases grew with internet giants such as Google, Facebook, Amazon etc who use them to deal with gigantic volumes of data. NoSQL systems are preferred in these cases as when you use a relational database for massive volumes of data , the system starts getting slow in terms of response time. The alternative to upgrading hardware to fix the problem would be to distribute our database load on multiple hosts as the load increases. This is known as "scaling out". NOSQL databases are non-relational databases that scale out better than relational databases and are designed with web applications in mind. They do not use SQL to query the data and do not follow strict schemas like relational models. Some examples of NoSQL databases include MongoDB, CouchDB and HBase.
+    NoSQL is an upcoming category of Database Management Systems. It’s main characteristic is it’s non-adherence to Relational Database Concepts. The popularity of NoSQL databases grew with internet giants such as Google, Facebook, Amazon etc who use them to deal with gigantic volumes of data. NoSQL systems are preferred in these cases as when you use a relational database for massive volumes of data , the system starts getting slow in terms of response time. The alternative to upgrading hardware to fix the problem would be to distribute our database load on multiple hosts as the load increases. This is known as "scaling out". NoSQL databases are non-relational databases that scale out better than relational databases and are designed with web applications in mind. They do not use SQL to query the data and do not follow strict schemas like relational models. Some examples of NoSQL databases include MongoDB, CouchDB and HBase.
     Neo4j is a graph database management system described as an ACID-compliant transactional database with native graph storage and processing. Neo4j is the most popular graph database used today. Neo4j is implemented in Java and accessible from software written in other languages using CQL through a transactional HTTP endpoint, or through the binary ``bolt'' protocol.
 
     \newpage
@@ -171,7 +171,6 @@
 
     \begin{algorithm}[htb!]
         \SetAlgoLined
-        \label{algo:sql_attr_extract}
         \caption{Extract attribute details of SQL database}
         \KwIn{\textbf{R}, a relational database}
         \KwOut{\textbf{AS}, an attribute set containing details of each attribute}
@@ -183,6 +182,7 @@
             }
         }
         return AS\;
+        \label{algo:sql_attr_set}
     \end{algorithm}
 
     The index and uniqueness constraint data enable the Neo4j setup to be as closely modelled to the relational one. Furthermore, indexing on attributes is maintained across systems and rigid constraints are also satisfied while inserting in the Neo4j database.
@@ -191,7 +191,6 @@
 
     \begin{algorithm}[htb!]
         \SetAlgoLined
-        \label{algo:sql_create_index}
         \caption{Create indices and constraints in Neo4j}
         \KwIn{\textbf{AS}, an attribute set containing details of each attribute}
         \KwResult{\textbf{G}, a graph database with applied indices and constraints}
@@ -207,9 +206,12 @@
                 }
             }
         }
+        \label{algo:sql_create_index}
     \end{algorithm}
 
-    In terms of Cypher Query Language (CQL), \verb|CreateIndex(G, table, attr)| is equivalent to 
+    \FloatBarrier
+
+    In terms of CQL, \verb|CreateIndex(G, table, attr)| is equivalent to 
     \begin{lstlisting}
         CREATE INDEX index_name ON:table(attr);
     \end{lstlisting}
@@ -222,7 +224,6 @@
 
     \begin{algorithm}[htb!]
         \SetAlgoLined
-        \label{algo:sql2graph}
         \caption{Populate the graph database with records}
         \KwIn{\textbf{R}, a relational database}
         \KwResult{\textbf{G}, a populated graph database}
@@ -231,6 +232,7 @@
                 CreateNewNode(G, table, record)\;
             }
         }
+        \label{algo:sql2graph}
     \end{algorithm}
 
     \verb|CreateNewNode(G, table, record)| is equivalent to 
@@ -243,7 +245,6 @@
 
     \begin{algorithm}[htb!]
         \SetAlgoLined
-        \label{algo:sql2rel}
         \caption{Create relationships between nodes in the graph data}
         \KwIn{\textbf{AS}, an attribute set containing details of each attribute}
         \KwResult{\textbf{G}, a graph database with relationships}
@@ -255,12 +256,52 @@
                 }
             }
         }
+        \label{algo:sql2rel}
     \end{algorithm}
 
     \verb|CreateRelationship(G, table, attr, fk_table, fk_attr)| is equivalent to 
     \begin{lstlisting}
         MATCH (a:table), (b:fk_table) WHERE a.attr = b.fk_attr CREATE (a) -[r:relationship_name]-> (b);
     \end{lstlisting}
+
+    \subsection{Converting NoSQL-databases to Neo4j format}
+    The primary difference between a NoSQL and relational database is that NoSQL databases do not define a formal schema. If data from such a database was to be migrated, it would result in lack of constraints and indices. Thus, an additional step is performed as compared to the procedure for RDBMS migration.
+
+    First, the NoSQL database is converted to an intermediate SQL-like format. This intermediate format improves maintainability and allows for seamless management of attribute characteristics over a traditional method.
+
+    \begin{algorithm}[htb!]
+        \SetAlgoLined
+        \caption{Convert a NoSQL database to a relational format}
+        \KwIn{\textbf{N}, a NoSQL database}
+        \KwOut{\textbf{AS}, a relational interpretation of \textbf{N}'s attributes}
+        AS \gets\ \phi\tcc*{empty map}
+        \ForEach{collection, \textbf{C}, in \textbf{N}}{
+            AS[C] \gets\ \phi\tcc*{empty map}
+            \ForEach{field in \textbf{C}}{
+                \If{field has unique values}{
+                    AS[C][field] \gets\ \{unique\gets true\}\;
+                }
+                \If{field not present in each record}{
+                    make field nullable
+                }
+            }
+            \uIf{unique field exists}{
+                AS[C][field] \gets\ \{index\gets true\}
+            }
+            \uElseIf{\textbf{C} has unique id}{
+                \tcc*[h]{uniqueness is absent}
+
+                use auto-generated id as index\;
+            }
+            \uElse{
+                insert unique id and use as index\;
+            }
+        }
+        return AS\;
+        \label{algo:nosql_conversion}
+    \end{algorithm}
+
+    It is possible for a NoSQL to define records in the same collection with a field missing. To convert to a relational model, all such fields are assumed to be nullable, and the missing records are filled in with \verb|NULL| values. Furthermore, the first unique field is taken as the primary key. Many NoSQL databases auto-generate a unique object identifier which can prove to be useful if a unique field doesn't exist.
 
     \clearpage
 
@@ -281,6 +322,44 @@
         \item Neo4j 4.0.5
     \end{itemize}
 
+    The user decides which database he/she wants to migrate. Details of each database (host, username, password, database name) must be present in a \verb|.env| file. Using the configuration provided here, a connection is established with the source and the target database (Neo4j). As per algorithm~\ref{algo:sql_attr_set}, an attribute set, AS, is maintained that holds data in the following format.
+    \begin{lstlisting}
+        `trained': {
+            `certificationdate': {
+                `position': 3, 
+                `index': False, 
+                `unique': False, 
+                `foreign_key': None
+            },
+            `certificationexpires': {
+                `position': 4, 
+                `index': False, 
+                `unique': False, 
+                `foreign_key': None
+            },
+            `physician': {
+                `position': 1, 
+                `index': False, 
+                `unique': False, 
+                `foreign_key': `physician.employeeid'
+            },
+            `treatment': {
+                `position': 2, 
+                `index': False, 
+                `unique': False, 
+                `foreign_key': `procedure_record.code'
+            }
+        },...
+    \end{lstlisting}
+
+    From the above data, it is easy to create indices and constraints on any given attribute.
+
+    Test migration for a MySQL database is carried out on a sample hospital database containing 45 records across 10 tables. This dataset has 13 different foreign key relationships.
+
+    Similarly, for NoSQL \dots
+
+    Testing for MongoDB is done on two databases. The first is a database containing US zip code information with 29353 records. Each record has the same attributes, and behaves similar to a relational database. For the second case, \dots
+
     \newpage
 
     \section{\sectionfontstyle Results and Analysis}
@@ -289,7 +368,7 @@
     \newpage
 
     \section{\sectionfontstyle Conclusion and Future Works}
-    In conclusion, it is found that it is not only feasible to undertake such transformation tasks between SQL/NoSQL databases, but that it is also quite beneficial when considering improved data visualization and presentation. The implementation of Sql2Neo discussed is additionally easily extensible to include various other source databases as a result of its system architecture and the use of an intermediate SQL -like data storage strategy. 
+    In conclusion, it is found that it is not only feasible to undertake such transformation tasks between SQL/NoSQL databases, but that it is also quite beneficial when considering improved data visualization and presentation. The implementation of Sql2Neo discussed is additionally easily extensible to include various other source databases as a result of its system architecture and the use of an intermediate SQL-like data storage strategy. 
 
     Future works include, as mentioned, the extension of this project to bring more source databases within the transformation fold, as well as to improve the quality of relationships derived from the data through more inference driven approaches (rather than the naive approach undertaken here). 
 
