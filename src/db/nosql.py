@@ -5,10 +5,12 @@ import logging
 import sys
 from typing import Dict, List
 
+import pandas as pd
 import pymongo
 from pymongo.errors import ConnectionFailure
 
 from src.config import MONGO_PORT, MONGO_HOST, MONGO_DB_NAME, MONGO_USER, MONGO_PASS, ERR_DB_CONN
+from src.models import AttributeData
 
 
 class Mongo:
@@ -36,7 +38,7 @@ class Mongo:
             # quietly suppress exception
             pass
 
-    def extract_collection_details(self) -> Dict[str, List[str]]:
+    def extract_collection_details(self) -> Dict[str, Dict[str, AttributeData]]:
         """
         Fetches collections in the database and gets the keys of the collection
 
@@ -46,29 +48,47 @@ class Mongo:
 
         details = {}
         logging.info(f'{len(collection_names)} collections discovered')
-        for name in collection_names:
-            details[name] = []
-            item = self.db[name].find_one()
-            logging.info(f'Extracting {name}\'s attributes')
-            for key in item:
-                details[name].append(key)
+        for _ in collection_names:
+            self.load_records_into_df(details)
 
         return details
 
-    def extract_records(self) -> Dict[str, List[Dict[str, object]]]:
+    def extract_records(self, details: Dict[str, Dict[str, AttributeData]]) -> Dict[str, List[Dict[str, object]]]:
         """
         Extracts all records stored in each collection
 
         :return: dictionary containing list of records. Each record is a dictionary with {key: value}
         """
-        details = self.extract_collection_details()
-
         records = {}
-        for key in details:
-            logging.info(f'Extracting records of {key}')
-            objects = self.db[key].find()
-            records[key] = []
+        for entity in details:
+            logging.info(f'Extracting records of {entity}')
+            objects = self.db[entity].find()
+            records[entity] = []
             for record in objects:
-                records[key].append(record)
+                records[entity].append({key: record.get(key) for key in details[entity]})
 
         return records
+
+    def load_records_into_df(self, details: Dict[str, Dict[str, AttributeData]]):
+        """
+        Load collection records into a DataFrame and check for constraints
+
+        :param details: updated details with indices and primary keys
+        """
+        for entity in details:
+            records = self.db[entity].find()
+            for item in records:
+                details[entity] = {key: AttributeData(i) for i, key in enumerate(item)}
+            df = pd.DataFrame(list(records), columns=details[entity].keys())
+            for key in details[entity]:
+                try:
+                    details[entity][key].unique = df[key].is_unique
+                except TypeError:
+                    details[entity][key].unique = False
+            marked = False
+            for key in details[entity]:
+                if key != '_id' and details[entity][key].unique:
+                    details[entity][key].index = True
+                    marked = True
+            if not marked:
+                details[entity]['_id'].index = True

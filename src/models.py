@@ -10,3 +10,6 @@ class AttributeData:
         self.index = index
         self.unique = unique
         self.foreign_key = foreign_key
+
+    def __repr__(self):
+        return f'(position={self.position}, index={self.index}, unique={self.unique}, foreign_key={self.foreign_key})'
