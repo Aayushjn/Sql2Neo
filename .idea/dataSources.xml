@@ -1,11 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="MySQL" uuid="fa74d1f0-44ba-4eb9-84e2-d1f01c531eca">
+    <data-source source="LOCAL" name="MySQL Fleet" uuid="fa74d1f0-44ba-4eb9-84e2-d1f01c531eca">
       <driver-ref>mysql.8</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
       <jdbc-url>jdbc:mysql://localhost:3306/fleet</jdbc-url>
+    </data-source>
+    <data-source source="LOCAL" name="MySQL hosp" uuid="92c3480e-a97f-4075-a533-ae75af8f14d8">
+      <driver-ref>mysql.8</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+      <jdbc-url>jdbc:mysql://localhost:3306/hosp</jdbc-url>
     </data-source>
   </component>
 </project>

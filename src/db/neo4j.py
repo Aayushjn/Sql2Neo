@@ -158,3 +158,15 @@ class Neo4j:
                     except DatabaseError as err:
                         # may occur if the constraint doesn't exist
                         logging.warning(err.message)
+
+    def run_query(self, cql: str):
+        """
+        Run a cypher query on the converted data
+
+        :param cql: query to run
+        """
+        logging.info(f'Executing {cql}')
+        cursor = self.graph.run(cql)
+        for res in cursor:
+            print(res)
+        cursor.close()

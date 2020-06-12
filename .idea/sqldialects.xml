@@ -4,4 +4,7 @@
     <file url="file://$PROJECT_DIR$/src/db/sql.py" dialect="GenericSQL" />
     <file url="PROJECT" dialect="MySQL" />
   </component>
+  <component name="SqlResolveMappings">
+    <file url="file://$PROJECT_DIR$/queries.sql" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;name&quot;:{     &quot;@qname&quot;:&quot;92c3480e-a97f-4075-a533-ae75af8f14d8&quot;    }   }  } }}" />
+  </component>
 </project>
