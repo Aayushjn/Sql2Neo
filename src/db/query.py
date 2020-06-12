@@ -111,6 +111,14 @@ class QueryTranslator:
         for query in queries:
             # all keywords are formatted to UPPER_CASE for uniformity
             query = sqlparse.format(query, keyword_case='upper', strip_comments=True)
+
+            if not query.startswith('SELECT'):
+                logging.warning('Only "SELECT" queries supported')
+                continue
+            if query.find('JOIN') != -1:
+                logging.warning('"JOIN" queries are not supported yet')
+                continue
+
             parsed_tokens = sqlparse.parse(query)[0].tokens
 
             # projection attributes are found between SELECT and FROM tokens
