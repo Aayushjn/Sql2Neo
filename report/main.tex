@@ -303,6 +303,66 @@
 
     A NoSQL can define records in the same collection with a field missing. To convert to a relational model, all such fields are assumed to be nullable, and the missing records are filled in with \verb|NULL| values. Furthermore, the first unique field is taken as the primary key. Many NoSQL databases auto-generate a unique object identifier, which can prove to be useful if a unique field does not exist. Once \verb|AS| is derived from the database, the migration can proceed as per the algorithms defined for SQL databases.
 
+    \subsection{Translating SQL queries to Cypher queries}
+    \label{sec:meth_query}
+    SQL and Cypher have quite a few common keywords that aid in simpler translation between queries. At its core, query translation requires:
+    \begin{enumerate}
+        \item identification of queried tables
+        \item identification of projection attributes
+        \item identification of selection conditions
+        \item extracting other keywords that can be translated
+    \end{enumerate}
+
+    As mentioned above, few of the keywords shared between SQL and Cypher are \verb|WHERE|, \verb|LIMIT|, \verb|ORDER BY|, \verb|AS|, and \verb|DISTINCT|. In algorithm \ref{algo:query_translate}, tokens are considered to be of two types, namely, \textit{keywords} and \textit{identifiers}. Identifiers follow a keyword normally, and are treated as a list of identifiers. This allows for multiple identifiers to be picked up for translation at once.
+
+    \begin{lstlisting}
+        SELECT p.name FROM person p;
+        SELECT name FROM person;
+    \end{lstlisting}
+    The above queries are equivalent, however, Cypher requires node labels to be explicitly provided. So, \verb|MapToVariableName| maps a given list to appropriate variable names (using `n' as default variable).
+    \begin{lstlisting}
+        MATCH (p:person) RETURN p.name;
+        MATCH (n:person) RETURN n.name;
+    \end{lstlisting}
+    A similar approach is applied to mapping variable names to the \verb|ORDER BY| attributes.
+
+    The algorithm can be extended to include other keywords that exist within CQL, and also to convert other keywords (like JOIN) into Cypher equivalents. The given approach is provided only on \verb|SELECT| queries since commonly used ones may benefit from such a translation.
+
+
+    \begin{algorithm}[htb!]
+        \SetAlgoLined
+        \caption{Translate SQL query to CQL}
+        \KwIn{\textbf{Q}, an SQL query}
+        \KwOut{\textbf{C}, converted Cypher query}
+        tokens \gets\ Tokenize(Q)\tcc*{split SQL query into individual tokens (keywords and identifiers)}
+        selection \gets\ \verb|NULL|\;
+        limit \gets\ \verb|NULL|\;
+        order \gets\ \verb|NULL|\;
+        \For{token in \textbf{tokens}}{
+            \uIf{token is \textbf{SELECT}}{
+                attributes \gets\ TokenAfter(token)\;
+                attributes \gets\ MapToVariableName(attributes)\tcc*{if table name is not provided (table.attr), then attributes must be mapped to default}
+            }
+            \uIf{token is \textbf{FROM}}{
+                tables \gets\ TokenAfter(token)\;
+                tables \gets\ MapToVariableName(tables)\tcc*{if variable name not given to table, provide defaults}
+            }
+            \uElseIf{token is \textbf{WHERE}}{
+                selection \gets\ TokenAfter(token)\;
+            }
+            \uElseIf{token is \textbf{LIMIT}}{
+                limit \gets\ TokenAfter(token)\;
+            }
+            \uElseIf{token is \textbf{ORDER BY}}{
+                order \gets\ TokenAfter(token)\;
+                order \gets\ MapToVariableName(order)\tcc*{if table name is not provided (table.attr), then attributes must be mapped to default}
+            }
+        }
+        C \gets\ BuildCypherQuery(tables, attributes, selection, order, limit)\;
+        return C\;
+        \label{algo:query_translate}
+    \end{algorithm}
+
     \clearpage
 
     \section{\sectionfontstyle Implementation}
@@ -316,6 +376,7 @@
             \item pymongo 3.10.1
             \item python-dotenv 0.13.0
             \item pandas 1.0.4
+            \item sqlparse 0.3.1
         \end{itemize}
         \item MySQL v8.0.20 for testing SQL databases
         \item MongoDB v3.6.8 for testing NoSQL databases
@@ -359,6 +420,15 @@
     Similarly, for NoSQL, the data is derived in the same format as for MySQL. However, there is an additional cost associated with determining the attribute statistics, i.e., the collected data has to be fully loaded into memory to check for uniqueness. In order to handle loading large datasets in memory, \textit{pandas DataFrames} is used. They can efficiently load large datasets and provide useful methods such as \verb|is_unique| to help determine attribute statistics.
 
     Testing for MongoDB is done on two databases. The first is a database containing US zip code information with 29353 records. Each record has the same attributes and behaves similar to a relational database. Loading this zip code information into a DataFrame takes negligible time, with the main bottleneck being the creation of 29353 nodes. For the second case, a sample database is created with a badly-defined schema. Multiple attributes are missing in the records of the collection. All these values are created and marked as \verb|None| (\verb|NULL| in Python).
+
+    As mentioned in section \ref{sec:meth_query}, the input queries are first tokenized and then converted to CQL equivalents. Tokenization is performed by the \textit{sqlparse} library. The program allows users to run the queries on the migrated database, or perform a \textit{dry run}, i.e., the user may validate the translated queries. As per the algorithm, the following keywords/features exist:
+    \begin{itemize}
+        \item Allows for projection attribute aliasing, i.e., p.name AS 'Patient', is retained
+        \item Table renaming, i.e., SELECT p.name, nurse.name FROM patient p, nurse n, retains table names defined in SQL
+        \item `*' projection is retained and replaced with `RETURN n'
+        \item Projection attributes are fully translated
+        \item Order by, and limit keywords are retained
+    \end{itemize}
 
     \newpage
 
