@@ -57,7 +57,8 @@ def build_query(tables: List[str],
                 where: Optional[List[str]],
                 attributes: List[str],
                 order_by: Optional[List[str]],
-                limit: Optional[str]) -> str:
+                limit: Optional[str],
+                distinct: bool) -> str:
     """
     Builds a cypher query from the extracted values
 
@@ -71,7 +72,10 @@ def build_query(tables: List[str],
     cql = [f'MATCH {",".join(tables)}']
     if where is not None:
         cql.append(f' WHERE {"".join(where)}')
-    cql.append(f' RETURN {",".join(attributes)}')
+    if not distinct:
+        cql.append(f' RETURN {",".join(attributes)}')
+    else:
+        cql.append(f' RETURN DISTINCT {",".join(attributes)}')
     if order_by is not None:
         cql.append(f' ORDER BY {",".join(order_by)}')
     if limit is not None:
@@ -128,7 +132,12 @@ class QueryTranslator:
             # the above is when the query is 'SELECT * FROM table ...;
             # CQL supports aliasing (SELECT n.name AS 'Name'), so attributes are taken directly from `query`
             # magic number '7' because 'SELECT (7th index)... FROM'
-            attributes = query[7:query.index('FROM')].strip().replace('.*', '').replace('*', 'n')
+            if 'DISTINCT' not in query:
+                distinct = False
+                attributes = query[7:query.index('FROM')].strip().replace('.*', '').replace('*', 'n')
+            else:
+                distinct = True
+                attributes = query[16:query.index('FROM')].strip().replace('.*', '').replace('*', 'n')
             if len(attributes) != 1:
                 attributes = list(
                     map(
@@ -143,6 +152,8 @@ class QueryTranslator:
             limit = None
 
             for i, token in enumerate(parsed_tokens):
+                if str(token) == 'SELECT':
+                    print(sqlparse.sql.TokenList(parsed_tokens[i:]).token_next(1))
                 if str(token) == 'FROM':
                     tables = get_tables(sqlparse.sql.TokenList(parsed_tokens[i:]).token_next(1))
                 elif str(token) == 'WHERE':
@@ -156,6 +167,6 @@ class QueryTranslator:
                     token_list = sqlparse.sql.TokenList(parsed_tokens[i:])
                     limit = token_list.token_next(1)[1]
 
-            converted.append(build_query(tables, where, attributes, order_by, limit))
+            converted.append(build_query(tables, where, attributes, order_by, limit, distinct))
 
         return converted
