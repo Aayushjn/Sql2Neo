@@ -41,12 +41,32 @@ A .env file must exist in the project root with the following keys
 - NEO4J_PASS (default: _neo4j_)
 - NEO4J_SCHEME (default: _http_)
 
-Run `python sql2neo.py convert --src <src_db> --dest <dest_db>`.
+After databases have been set up and environment variables have been provided, the following commands can be used:
+- Migrate source database to Neo4j: `python sql2neo.py convert --src (mysql|mongo)`. Optionally, `--db <db_name>` option 
+can be used to override the source database provided in .env
+- Translate SQL queries to Cypher: `python sql2neo.py translate -q <query> [-f] <file.(txt|sql)>` . If both the flags are
+provided, it defaults to `-q`. Furthermore, the translated queries can be run on Neo4j as well. To do so, pass `--run` 
+flag. The default action is to use `--dry-run`.
+- Delete all created data (including indices and constraints): `python sql2neo.py --delete-all`.
+
+Verbosity can be reduced by using the `--suppress-logs` flag with any of the commands.
 
 ### Testing
-For testing purposes, the [employees database](https://dev.mysql.com/doc/employee/en/) provided by MySQL is used. It is 
-available under the [Creative Commons license](https://creativecommons.org/licenses/by-sa/3.0/). It has 4 million 
-records across 6 tables (~160 MB). 
+- SQL: Test database 'hosp' is used. This can be set up by running; `mysql -u <username> -p < hosp.sql`.
+ ([hosp.sql](hosp.sql))
+- NoSQL
+    - Well-defined schema: [students.json](https://github.com/ozlerhakan/mongodb-json-files/blob/master/datasets/students.json) 
+    is used. To import it, run:
+    ```shell script
+    curl https://raw.githubusercontent.com/ozlerhakan/mongodb-json-files/master/datasets/students.json
+    mongoimport -d=test students.json
+    ```
+    - Irregular schema: [products.json](https://github.com/ozlerhakan/mongodb-json-files/blob/master/datasets/products.json)
+    is used. To import it, run:
+    ```shell script
+    curl https://raw.githubusercontent.com/ozlerhakan/mongodb-json-files/master/datasets/products.json
+    mongoimport -d=test products.json
+    ```
 
 ### Features
 - [x] SQL to Neo4j conversion
@@ -57,6 +77,9 @@ records across 6 tables (~160 MB).
 - [ ] NoSQL to Neo4j conversion
     - [x] Node creation
     - [ ] Relationship creation
+- [ ] Query Translation
+    - [x] Support basic SELECT, WHERE, DISTINCT, AS, ORDER BY, and LIMIT queries
+    - [ ] Support JOIN queries
     
 Sql2Neo creates indices for all SQL tables on its primary key. Further, it creates a uniqueness constraint on all non-PK
 attributes that are unique. Finally, it creates FK relations from referencing table to the referenced table. 
