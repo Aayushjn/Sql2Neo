@@ -18,7 +18,8 @@ class Mongo:
     A wrapper class around the MongoClient connection
     """
 
-    def __init__(self, db_name: str = None):
+    def __init__(self, db_name: str = None, verbose: bool = True):
+        self.verbose = verbose
         self.client = pymongo.MongoClient(MONGO_HOST, int(MONGO_PORT), username=MONGO_USER, password=MONGO_PASS)
         try:
             # 'ismaster' admin command is an inexpensive command to verify if connection to MongoDB is established
@@ -26,13 +27,15 @@ class Mongo:
         except ConnectionFailure:
             logging.error(f'Check whether MongoDB is running on {MONGO_HOST}:{MONGO_PORT}')
             sys.exit(ERR_DB_CONN)
-        logging.info('Connection established to Mongo DB')
+        if self.verbose:
+            logging.info('Connection established to Mongo DB')
         self.db = self.client[db_name or MONGO_DB_NAME]
 
     def __del__(self):
         try:
             self.client.close()
-            logging.info('MongoDB connection closed')
+            if self.verbose:
+                logging.info('MongoDB connection closed')
         except:
             # exception may occur if there was an error in establishing connection
             # quietly suppress exception
@@ -61,7 +64,8 @@ class Mongo:
         """
         records = {}
         for entity in details:
-            logging.info(f'Extracting records of {entity}')
+            if self.verbose:
+                logging.info(f'Extracting records of {entity}')
             objects = self.db[entity].find()
             records[entity] = []
             for record in objects:

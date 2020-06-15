@@ -36,7 +36,17 @@ S
 queries.sql,9/f/9fbde4f32e243bbc02405a961deeb523696a161b
 ?
 src/db/query.py,a/e/ae7310e68d2aee170b6d966d4b01054a22eed184
-@
-test/__init__.py,7/a/7ac8b74ac3c1c5140ed772c822cc328b0793f984
+K
+src/.pytest_cache/README.md,2/e/2e560391071e921d2d5113811ac9e40cbe675285
+Q
+!tests/reports/migration_test.html,7/6/76366040e8498716dd390dbc6f87f22cd5d877d4
+S
+#tests/reports/translation_test.html,c/7/c73e942d9222f2ea3607a734f9c5e24bb3db061e
 A
-test/migration.py,d/f/df94d3a24a1f810d4db3f1e958ea192b9fd0a13f
+tests/__init__.py,8/e/8e911f6351f3fa0cd30fc10a701473fbb56707e6
+B
+tests/migration.py,9/e/9eadc02e136df89a4691cb41af2ff2f7719110a1
+B
+tests/translate.py,d/8/d89419c6051876945e2fbd537f6bace4e657a34c
+8
+hosp.sql,7/3/73cc2427f5e84c261601417c5f6b5f362ebb550f
