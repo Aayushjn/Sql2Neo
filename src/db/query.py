@@ -67,17 +67,18 @@ def build_query(tables: List[str],
     :param attributes: projection attributes
     :param order_by: optional order by attributes
     :param limit: return value limit
+    :param distinct: flag whether DISTINCT keyword is present
     :return: final cypher query
     """
-    cql = [f'MATCH {",".join(tables)}']
+    cql = [f'MATCH {", ".join(tables)}']
     if where is not None:
         cql.append(f' WHERE {"".join(where)}')
     if not distinct:
-        cql.append(f' RETURN {",".join(attributes)}')
+        cql.append(f' RETURN {", ".join(attributes)}')
     else:
-        cql.append(f' RETURN DISTINCT {",".join(attributes)}')
+        cql.append(f' RETURN DISTINCT {", ".join(attributes)}')
     if order_by is not None:
-        cql.append(f' ORDER BY {",".join(order_by)}')
+        cql.append(f' ORDER BY {", ".join(order_by)}')
     if limit is not None:
         cql.append(f' LIMIT {limit}')
     cql.append(';')
@@ -106,6 +107,7 @@ class QueryTranslator:
     def convert(self) -> List[str]:
         """
         Converts `self.sql` to a list of CQL queries
+        Converted query may be 'UNSUPPORTED' if query contains unsupported keywords
 
         :return: converted cypher queries
         """
@@ -118,9 +120,11 @@ class QueryTranslator:
 
             if not query.startswith('SELECT'):
                 logging.warning('Only "SELECT" queries supported')
+                converted.append('UNSUPPORTED')
                 continue
             if query.find('JOIN') != -1:
                 logging.warning('"JOIN" queries are not supported yet')
+                converted.append('UNSUPPORTED')
                 continue
 
             parsed_tokens = sqlparse.parse(query)[0].tokens
@@ -142,7 +146,7 @@ class QueryTranslator:
                 attributes = list(
                     map(
                         # if n.attr doesn't exist, then prepend n., otherwise let it be
-                        lambda x: f'n.{x.strip()}' if len(x.split('.')) == 1 else x,
+                        lambda x: f'n.{x.strip()}' if len(x.split('.')) == 1 else x.strip(),
                         attributes.split(','))
                 )
 
@@ -152,15 +156,14 @@ class QueryTranslator:
             limit = None
 
             for i, token in enumerate(parsed_tokens):
-                if str(token) == 'SELECT':
-                    print(sqlparse.sql.TokenList(parsed_tokens[i:]).token_next(1))
                 if str(token) == 'FROM':
                     tables = get_tables(sqlparse.sql.TokenList(parsed_tokens[i:]).token_next(1))
-                elif str(token) == 'WHERE':
+                elif isinstance(token, sqlparse.sql.Where):
                     where = list(map(str, token.tokens[2:]))
                     if where[-1] == ';':
                         # if last part of query is the WHERE clause, remove the trailing semicolon
                         where = where[:-1]
+                    where[-1] = where[-1].strip()
                 elif str(token) == 'ORDER BY':
                     order_by = get_order_by_attributes(sqlparse.sql.TokenList(parsed_tokens[i:]).token_next(1))
                 elif str(token) == 'LIMIT':

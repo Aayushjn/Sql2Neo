@@ -51,7 +51,8 @@ class Neo4j:
     """
     A wrapper around Neo4j Graph connection
     """
-    def __init__(self):
+    def __init__(self, verbose: bool = True):
+        self.verbose = verbose
         self.graph = Graph(scheme=NEO4J_SCHEME, host=NEO4J_HOST, port=NEO4J_PORT, auth=(NEO4J_USER, NEO4J_PASS))
         try:
             # run a test query to verify connection
@@ -81,18 +82,22 @@ class Neo4j:
                 if relations[table][attr].index:
                     try:
                         self.graph.run(f'CREATE INDEX ON:{table}({attr})')
-                        logging.info(f'Index created on {attr} for {table}')
+                        if self.verbose:
+                            logging.info(f'Index created on {attr} for {table}')
                     except ClientError as err:
                         # if index on `attr` already exists, `ClientError` is raised
-                        logging.warning(err.message)
+                        if self.verbose:
+                            logging.warning(err.message)
                 if relations[table][attr].unique and not relations[table][attr].index:
                     try:
                         self.graph.run(f'CREATE CONSTRAINT constraint_{table}_{attr} ON (a:{table}) ASSERT a.{attr} IS '
                                        f'UNIQUE')
-                        logging.info(f'Uniqueness constraint created on {attr} for {table}')
+                        if self.verbose:
+                            logging.info(f'Uniqueness constraint created on {attr} for {table}')
                     except ClientError as err:
                         # if constraint on `attr` already exists, `ClientError` is raised
-                        logging.warning(err.message)
+                        if self.verbose:
+                            logging.warning(err.message)
 
     def write_records_to_neo(self, records: Dict[str, List[Dict[str, object]]]):
         """
@@ -111,10 +116,12 @@ class Neo4j:
                     node = Node(table, **get_compatible_record(record))
                     tx.create(node)
                     tx.commit()
-                logging.info(f'{len(records[table])} nodes created for {table}')
+                if self.verbose:
+                    logging.info(f'{len(records[table])} nodes created for {table}')
             except ClientError as err:
                 # if node already exists (and the node has constraint on a property), `ClientError` is raised
-                logging.warning(err.message)
+                if self.verbose:
+                    logging.warning(err.message)
 
     def create_relationships(self, relations: Dict[str, Dict[str, AttributeData]]):
         """
@@ -132,7 +139,8 @@ class Neo4j:
                 if (rel := relations[table][attr].foreign_key) is not None:
                     fk_table, fk_attr = rel.split('.')
                     self.graph.run(query.format(table, fk_table, attr, fk_attr, table, fk_table))
-                    logging.info(f'Relationship {table}_FK_{fk_table} created')
+                    if self.verbose:
+                        logging.info(f'Relationship {table}_FK_{fk_table} created')
 
     def destroy_all(self, relations: Dict[str, Dict[str, AttributeData]]):
         """
@@ -142,22 +150,27 @@ class Neo4j:
         """
         for table in relations:
             self.graph.run(f'MATCH (n:{table}) DETACH DELETE n')
-            logging.info(f'All nodes and relationships of {table} deleted')
+            if self.verbose:
+                logging.info(f'All nodes and relationships of {table} deleted')
             for attr in relations[table]:
                 if relations[table][attr].index:
                     try:
                         self.graph.run(f'DROP INDEX ON:{table}({attr})')
-                        logging.info(f'Index on {table}.{attr} dropped')
+                        if self.verbose:
+                            logging.info(f'Index on {table}.{attr} dropped')
                     except DatabaseError as err:
                         # may occur if the index doesn't exist
-                        logging.warning(err.message)
+                        if self.verbose:
+                            logging.warning(err.message)
                 if relations[table][attr].unique and not relations[table][attr].index:
                     try:
                         self.graph.run(f'DROP CONSTRAINT ON (n:{table}) ASSERT n.{attr} IS UNIQUE')
-                        logging.info(f'Uniqueness constraint on {table}.{attr} dropped')
+                        if self.verbose:
+                            logging.info(f'Uniqueness constraint on {table}.{attr} dropped')
                     except DatabaseError as err:
                         # may occur if the constraint doesn't exist
-                        logging.warning(err.message)
+                        if self.verbose:
+                            logging.warning(err.message)
 
     def run_query(self, cql: str):
         """
@@ -170,3 +183,14 @@ class Neo4j:
         for res in cursor:
             print(res)
         cursor.close()
+
+    def get_index_count(self) -> int:
+        """
+        Fetches all indexes using APOC procedure
+
+        :return: list of indices
+        """
+        return len(list(self.graph.run('CALL db.indexes')))
+
+    def get_node_count(self) -> int:
+        return self.graph.run('MATCH (n) RETURN COUNT(*)').evaluate()

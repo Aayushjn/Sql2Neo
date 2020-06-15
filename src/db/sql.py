@@ -16,8 +16,8 @@ class MySQL:
     """
     A wrapper class around the MySQL connection
     """
-
-    def __init__(self, db_name: str = None):
+    def __init__(self, db_name: str = None, verbose: bool = True):
+        self.verbose = verbose
         try:
             if db_name is not None:
                 MYSQL_CONFIG['database'] = db_name
@@ -31,12 +31,14 @@ class MySQL:
                 msg = err.msg
             logging.error(msg)
             sys.exit(ERR_DB_CONN)
-        logging.info('Connection established to MySQL database')
+        if self.verbose:
+            logging.info('Connection established to MySQL database')
 
     def __del__(self):
         try:
             self.conn.close()
-            logging.info('MySQL connection closed')
+            if self.verbose:
+                logging.info('MySQL connection closed')
         except:
             # exception may occur if there was an error in establishing connection
             # quietly suppress exception
@@ -64,7 +66,8 @@ class MySQL:
         tables = {}
         logging.info(f'{cursor.rowcount} tables discovered')
         for entry in cursor:
-            logging.info(f'Fetching column names of {entry[0]}')
+            if self.verbose:
+                logging.info(f'Fetching column names of {entry[0]}')
             if tables.get(entry[0]) is None:
                 tables[entry[0]] = {}
 
@@ -103,7 +106,8 @@ class MySQL:
 
         records = {}
         for table in table_details:
-            logging.info(f'Extracting records of {table}')
+            if self.verbose:
+                logging.info(f'Extracting records of {table}')
             cursor.execute(f'SELECT * FROM {table}')
             records[table] = []
             for record in cursor:

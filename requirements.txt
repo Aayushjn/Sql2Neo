@@ -1,4 +1,6 @@
 alabaster==0.7.12
+ansi2html==1.5.2
+attrs==19.3.0
 Babel==2.8.0
 certifi==2020.4.5.1
 chardet==3.0.4
@@ -9,6 +11,7 @@ idna==2.9
 imagesize==1.2.0
 Jinja2==2.11.2
 MarkupSafe==1.1.1
+more-itertools==8.4.0
 mysql-connector-python==8.0.20
 neobolt==1.7.17
 neotime==1.7.4
@@ -16,12 +19,16 @@ numpy==1.18.4
 packaging==20.4
 pandas==1.0.4
 pkg-resources==0.0.0
+pluggy==0.13.1
 prompt-toolkit==2.0.10
-protobuf==3.12.1
+py==1.8.1
 py2neo==4.3.0
 Pygments==2.3.1
 pymongo==3.10.1
 pyparsing==2.4.7
+pytest==5.4.3
+pytest-html==2.1.1
+pytest-metadata==1.9.0
 python-dateutil==2.8.1
 python-dotenv==0.13.0
 pytz==2020.1
