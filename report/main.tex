@@ -83,7 +83,7 @@
 
     Relational Databases or SQL databases are a  type of DBMS that defines database relationships in the form of tables, also known as relations. They are the most popular DBMS type in the market. Unlike network DBMS, RDBMS does not support many to many relationships. Relational DBMS usually have pre-defined data types that they can support. SQL stands for Structured Query Language and is the standard language for dealing with Relational Databases. It can be used to insert, search, update, and delete database records and many other operations, including optimizing and maintaining databases. Databases like MySQL Database, Oracle, MS SQL Server, Sybase, etc. use SQL.
 
-    NoSQL is an upcoming category of Database Management Systems. It is main characteristic is it is non-adherence to Relational Database Concepts. The popularity of NoSQL databases grew with internet giants such as Google, Facebook, Amazon, etc. who use them to deal with gigantic volumes of data. NoSQL systems are preferred in these cases due to their ability to manage large datasets without performance trade-offs. The alternative to upgrading hardware to fix the problem would be to distribute our database load on multiple hosts as the load increases. This is known as ``scaling out''. NoSQL databases are non-relational databases that scale-out better than relational databases and are designed with web applications in mind. They do not use SQL to query the data and do not follow strict schemas like relational models. Some examples of NoSQL databases include MongoDB, CouchDB, and HBase.
+    NoSQL is an upcoming category of Database Management Systems. Its main characteristic is its non-adherence to Relational Database Concepts. The popularity of NoSQL databases grew with internet giants such as Google, Facebook, Amazon, etc. who use them to deal with gigantic volumes of data. NoSQL systems are preferred in these cases due to their ability to manage large datasets without performance trade-offs. The alternative to upgrading hardware to fix the problem would be to distribute our database load on multiple hosts as the load increases. This is known as ``scaling out''. NoSQL databases are non-relational databases that scale-out better than relational databases and are designed with web applications in mind. They do not use SQL to query the data and do not follow strict schemas like relational models. Some examples of NoSQL databases include MongoDB, CouchDB, and HBase.
     Neo4j is a graph database management system described as an ACID-compliant transactional database with native graph storage and processing. Neo4j is the most popular graph database used today. Neo4j is implemented in Java and accessible from software written in other languages using CQL through a transactional HTTP endpoint, or through the binary ``bolt'' protocol.
 
     \newpage
@@ -147,7 +147,7 @@
     
     As Neo4j creates relationships between existing nodes, the nodes are defined first from the identified entities in the data description. Then, relationships or links between the nodes are created and committed to the database.
     
-    The system architecture has been designed to encourage extensibility to include compatibility with multiple SQL and NoSQL implementations. All the primary steps before node creation begin to deal with bringing the data to an established universal format, after which conversion to Neo4j entities and relationships is a single pipeline process for all. Thus, it requires that only translation steps to this intermediate format must be determined to include another implementation in the converter.
+    The system architecture has been designed to encourage extensibility to include compatibility with multiple SQL and NoSQL implementations. Before node creation, all the primary steps begin to deal with bringing the data to an established universal format, after which conversion to Neo4j entities and relationships is a single pipeline process for all. Thus, it requires that only translation steps to this intermediate format must be determined to include another implementation in the converter.
     
     \begin{figure}[htb!]
         \centering
@@ -156,7 +156,7 @@
         \label{fig:sql2neo_query}
     \end{figure}
 
-    In addition, we also undertake query translation from source (SQL/NoSQL) to CQL or Cypher Query Language. The steps begin with parsing the query to isolate terms of interest (figure~\ref{fig:sql2neo_query}). This is followed by identifying components (such as entities and attributes) from the parsed data. We then identify any conditional clauses to be placed (such as found in an SQL ``WHERE'' query phrase) and represent them appropriately. Finally, the query is reassembled from its components and placed into a template structure for an equivalent CQL query.
+    We also undertake query translation from source (SQL/NoSQL) to CQL or Cypher Query Language. The steps begin with parsing the query to isolate terms of interest (figure~\ref{fig:sql2neo_query}). This is followed by identifying components (such as entities and attributes) from the parsed data. We then identify any conditional clauses to be placed (such as found in an SQL ``WHERE'' query phrase) and represent them appropriately. Finally, the query is reassembled from its components and placed into a template structure for an equivalent CQL query.
 
     \newpage
 
@@ -187,7 +187,7 @@
 
     The index and uniqueness constraint data enable the Neo4j set up to be as closely modeled to the relational one. Furthermore, indexing on attributes is maintained across systems, and rigid constraints are also satisfied while inserting in the Neo4j database.
 
-    Since Neo4j stores data as JSON documents, it does not define a rigid and formal schema. Owing to this property, indices, and constraints can be created before the data is actually inserted. In Neo4j, index creation is not idempotent, meaning that creating the index twice results in an error. Additionally, constraints implicitly create an index on the specified attribute (much like relational databases). Thus constraints are applied only on those attributes that are not indexed.
+    Since Neo4j stores data as JSON documents, it does not define a rigid and formal schema. Owing to this property, indices and constraints can be created before the data is inserted. In Neo4j, index creation is not idempotent, meaning that creating the index twice results in an error. Additionally, constraints implicitly create an index on the specified attribute (much like relational databases). Thus constraints are applied only on those attributes that are not indexed.
 
     \begin{algorithm}[htb!]
         \SetAlgoLined
@@ -313,7 +313,7 @@
         \item extracting other keywords that can be translated
     \end{enumerate}
 
-    As mentioned above, few of the keywords shared between SQL and Cypher are \verb|WHERE|, \verb|LIMIT|, \verb|ORDER BY|, \verb|AS|, and \verb|DISTINCT|. In algorithm \ref{algo:query_translate}, tokens are considered to be of two types, namely, \textit{keywords} and \textit{identifiers}. Identifiers follow a keyword normally, and are treated as a list of identifiers. This allows for multiple identifiers to be picked up for translation at once.
+    As mentioned above, few of the keywords shared between SQL and Cypher are \verb|WHERE|, \verb|LIMIT|, \verb|ORDER BY|, \verb|AS|, and \verb|DISTINCT|. In algorithm~\ref{algo:query_translate}, tokens are considered to be of two types, namely, \textit{keywords} and \textit{identifiers}. Identifiers follow a keyword normally and are treated as a list of identifiers. This allows for multiple identifiers to be picked up for translation at once.
 
     \begin{lstlisting}
         SELECT p.name FROM person p;
@@ -326,8 +326,7 @@
     \end{lstlisting}
     A similar approach is applied to mapping variable names to the \verb|ORDER BY| attributes.
 
-    The algorithm can be extended to include other keywords that exist within CQL, and also to convert other keywords (like JOIN) into Cypher equivalents. The given approach is provided only on \verb|SELECT| queries since commonly used ones may benefit from such a translation.
-
+    The algorithm can be extended to include other keywords within CQL and to convert other keywords (like \verb|JOIN|) into Cypher equivalents. The given approach is provided only on \verb|SELECT| queries since commonly used ones may benefit from such a translation.
 
     \begin{algorithm}[htb!]
         \SetAlgoLined
@@ -415,11 +414,11 @@
 
     From the above data, it is easy to create indices and constraints on any given attribute.
 
-    Test migration for a MySQL database is carried out on a sample hospital database containing 45 records across 10 tables. This dataset has 13 different foreign key relationships.
+    Test migration for a MySQL database is carried out on a sample hospital database containing 45 records across ten tables. This dataset has 13 different foreign key relationships.
 
     Similarly, for NoSQL, the data is derived in the same format as for MySQL. However, there is an additional cost associated with determining the attribute statistics, i.e., the collected data has to be fully loaded into memory to check for uniqueness. In order to handle loading large datasets in memory, \textit{pandas DataFrames} is used. They can efficiently load large datasets and provide useful methods such as \verb|is_unique| to help determine attribute statistics.
 
-    Testing for MongoDB is done on two databases. The first is a database containing US zip code information with 29353 records. Each record has the same attributes and behaves similar to a relational database. Loading this zip code information into a DataFrame takes negligible time, with the main bottleneck being the creation of 29353 nodes. For the second case, a sample database is created with a badly-defined schema. Multiple attributes are missing in the records of the collection. All these values are created and marked as \verb|None| (\verb|NULL| in Python).
+    MongoDB is tested on two databases. The first is a database containing US zip code information with 29353 records. Each record has the same attributes and behaves similar to a relational database. Loading this zip code information into a DataFrame takes negligible time, with the main bottleneck being the 29353 nodes' creation. For the second case, a product database is used. Multiple attributes are missing in the records of the collection. All these values are created and marked as \verb|None| (\verb|NULL| in Python).
 
     As mentioned in section \ref{sec:meth_query}, the input queries are first tokenized and then converted to CQL equivalents. Tokenization is performed by the \textit{sqlparse} library. The program allows users to run the queries on the migrated database, or perform a \textit{dry run}, i.e., the user may validate the translated queries. As per the algorithm, the following keywords/features exist:
     \begin{itemize}
@@ -442,7 +441,7 @@
         \label{fig:created_indices}
     \end{figure}
 
-    In figure \ref{fig:created_indices}, we can see the indexes created on the test database. It is essential to note the successful translation of uniqueness constraints and attributes to build B-Tree indexes on the fields as required. Index names are auto-generated.
+    In figure~\ref{fig:created_indices}, we can see the indexes created on the test database. It is essential to note the successful translation of uniqueness constraints and attributes to build B-Tree indexes on the fields as required. Index names are auto-generated.
 
     \begin{figure}[htb!]
         \centering
@@ -451,11 +450,11 @@
         \label{fig:nodes_rels}
     \end{figure}
 
-    In figure \ref{fig:nodes_rels}, we show the successful creation of a graph database with all tables and relations being translated to Neo4j nodes and relations. The entity types are represented by different colored nodes (legend can be found in the top bar of the image), and the labeling of the nodes corresponds to the value in the attribute ``name''. Relationships are represented by a single line joining two nodes with the relationship name written on it. 
+    In figure~\ref{fig:nodes_rels}, we show the successful creation of a graph database with all tables and relations being translated to Neo4j nodes and relations. The entity types are represented by different colored nodes (legend can be found in the top bar of the image), and the labeling of the nodes corresponds to the value in the attribute ``name''. Relationships are represented by a single line joining two nodes with the relationship name written on it. 
 
     Hovering over an entity will display the additional attributes (apart from ``name'') of the entity. Similarly, we can see additional attributes of relations by hovering over them. 
 
-    For a closer look at the structure of the nodes, we look to figure \ref{fig:node_subset}.
+    For a closer look at the structure of the nodes, we look to figure~\ref{fig:node_subset}.
 
     \begin{figure}[htb!]
         \centering
@@ -474,12 +473,43 @@
 
     The output of MongoDB is not shown here since it just creates nodes and indexes. Since no relationship extraction is performed, it is a subset of the output of MySQL migration.
 
+    The following analysis deals with the second module of the conversion process, which is query translation. Several assumptions have been made during this design process, including:
+    \begin{itemize}
+        \item Only \verb|SELECT| queries will be supported for translation 
+        \item No queries containing table joins will be sent to the system for translation 
+        \item All table and attribute names are unique and do not collide with SQL keywords
+        \item Queries provided are pre-validated on the original database 
+    \end{itemize}
+
+    \begin{figure}[htb!]
+        \centering
+        \includegraphics[width=155mm]{img/input_queries.png}
+        \caption{Input queries}
+        \label{fig:input_queries}
+    \end{figure}
+
+    Figure~\ref{fig:input_queries} thus shows some query formats that are supported as well as a final \verb|INSERT| query, which will not be translated by the system. We note that the system has been designed to support the aliasing of table names as well as conditional operations on attributes. As mentioned in the assumptions, issues may arise if attribute/table names coincide with SQL keywords. This is what occurs in the case of query 4 and query 6. `block' and `position' are SQL keywords, and while formatting them, they are converted to upper case.
+
+    Figure~\ref{fig:output_queries} shows the output generated when these queries are sent into the translation module. The converted queries are printed to the command line, as seen below, in the equivalent CQL format.
+
+    \begin{figure}[htb!]
+        \centering
+        \includegraphics[width=155mm]{img/output_queries.png}
+        \caption{Output queries}
+        \label{fig:output_queries}
+    \end{figure}
+
+    Queries that contain unsupported keywords are returned as `UNSUPPORTED'. As mentioned earlier, the output contains `BLOCK' and `POSITION' as keywords. This will not allow these queries to run directly on Neo4j. The translator intends to provide the first pass of a converted query. This query can be further optimized by removing redundancies/errors to allow it to run.
+
     \newpage
 
     \section{\sectionfontstyle Conclusion and Future Works}
     In conclusion, it is found that it is feasible to undertake such transformation tasks between SQL/NoSQL databases and that it is also quite beneficial when considering improved data visualization and presentation. The implementation of Sql2Neo discussed is additionally easily extensible to include various other source databases as a result of its system architecture and the use of an intermediate SQL-like data storage strategy.
 
-    Future works include, as mentioned, the extension of this project to bring more source databases within the transformation fold and improve the quality of relationships derived from the data through more inference driven approaches (rather than the naive approach undertaken here). Furthermore, the implementation of a query translator from SQL to CQL will bridge the gap between the two technologies. It will also allow for a more analytical approach to the SQL database and a graphical approach to the Neo4j database. Currently, all indices are single attribute indices and are created only on the primary key (or first unique value for NoSQL). An improvement would be to support composite attribute index conversion. These indices are present in SQL databases and can provide performance improvements in Neo4j as well.
+    Future works include, as mentioned, the extension of this project to bring more source databases within the transformation fold and improve the quality of relationships derived from the data through more inference driven approaches (rather than the naive approach undertaken here). An extensible query translation model makes the overall tool a complete one-step solution for database migration without extra manual work of rewriting queries to fit the new database. 
+    
+    Currently, all indices are single attribute indices and are created only on the primary key (or first unique value for NoSQL). An improvement would be to support composite attribute index conversion. These indices are present in SQL databases and can provide performance improvements in Neo4j as well. The query translation can also be improved and enhanced by adding support for \verb|JOIN|-based querying, and other non-\verb|SELECT| queries.
+
 
     \newpage
 
