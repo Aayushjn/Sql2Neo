@@ -41,13 +41,15 @@ A .env file must exist in the project root with the following keys
 - NEO4J_PASS (default: _neo4j_)
 - NEO4J_SCHEME (default: _http_)
 
+_Run the commands from the Sql2Neo root directory._
+
 After databases have been set up and environment variables have been provided, the following commands can be used:
-- Migrate source database to Neo4j: `python sql2neo.py convert --src (mysql|mongo)`. Optionally, `--db <db_name>` option 
+- Migrate source database to Neo4j: `python -m src.sql2neo.py convert --src (mysql|mongo)`. Optionally, `--db <db_name>` option 
 can be used to override the source database provided in .env
-- Translate SQL queries to Cypher: `python sql2neo.py translate -q <query> [-f] <file.(txt|sql)>` . If both the flags are
+- Translate SQL queries to Cypher: `python -m src.sql2neo.py translate -q <query> [-f] <file.(txt|sql)>` . If both the flags are
 provided, it defaults to `-q`. Furthermore, the translated queries can be run on Neo4j as well. To do so, pass `--run` 
 flag. The default action is to use `--dry-run`.
-- Delete all created data (including indices and constraints): `python sql2neo.py --delete-all`.
+- Delete all created data (including indices and constraints): `python -m src.sql2neo.py --delete-all`.
 
 Verbosity can be reduced by using the `--suppress-logs` flag with any of the commands.
 
