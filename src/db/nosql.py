@@ -51,7 +51,8 @@ class Mongo:
 
         details = {}
         logging.info(f'{len(collection_names)} collections discovered')
-        for _ in collection_names:
+        for name in collection_names:
+            details[name] = {}
             self.load_records_into_df(details)
 
         return details
